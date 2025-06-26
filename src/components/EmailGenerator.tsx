@@ -6,218 +6,199 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Copy, RefreshCw, ArrowLeft, Mail, Sparkles } from "lucide-react";
+import { Copy, Sparkles, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { ProtectedRoute } from "./ProtectedRoute";
 
 export const EmailGenerator = () => {
-  const [formData, setFormData] = useState({
-    product: "",
-    audience: "",
-    tone: ""
-  });
-  const [generatedEmails, setGeneratedEmails] = useState<Array<{subject: string, body: string}>>([]);
+  const [productService, setProductService] = useState("");
+  const [targetAudience, setTargetAudience] = useState("");
+  const [tone, setTone] = useState("");
+  const [generatedEmail, setGeneratedEmail] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
-  const [emailsGenerated, setEmailsGenerated] = useState(7); // Mock counter
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleGenerate = async () => {
-    if (!formData.product || !formData.audience || !formData.tone) {
+    if (!productService || !targetAudience || !tone) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all fields before generating emails.",
-        variant: "destructive"
+        description: "Please fill in all fields to generate your email.",
+        variant: "destructive",
       });
       return;
     }
 
     setIsGenerating(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Mock generated emails
-    const mockEmails = [
-      {
-        subject: `Quick question about ${formData.product.split(' ')[0]} at [Company Name]`,
-        body: `Hi [First Name],
+    // Simulate email generation (replace with actual AI call later)
+    setTimeout(() => {
+      const mockEmail = `Subject: Transform Your ${targetAudience} Strategy Today
 
-I noticed you're working at [Company Name] and thought you might be interested in ${formData.product}.
+Hi [Name],
 
-${formData.tone === 'friendly' ? 'I\'d love to chat about' : formData.tone === 'professional' ? 'I wanted to discuss' : 'This could revolutionize'} how ${formData.audience} ${formData.tone === 'friendly' ? 'can benefit from' : formData.tone === 'professional' ? 'utilize' : 'dominate with'} our solution.
+I hope this email finds you well. I'm reaching out because I noticed you're in the ${targetAudience} space, and I believe our ${productService} could significantly impact your results.
 
-${formData.tone === 'friendly' ? 'Would you be up for a quick 15-minute call this week?' : formData.tone === 'professional' ? 'Would you be available for a brief conversation to explore this opportunity?' : 'Ready to see results that will blow your mind?'}
+Here's what makes us different:
+• Proven track record with companies like yours
+• ${tone === "professional" ? "Enterprise-grade" : tone === "friendly" ? "User-friendly" : "Cutting-edge"} solution
+• Immediate ROI within the first month
+
+Would you be open to a quick 15-minute call this week to explore how we can help you achieve [specific goal]?
 
 Best regards,
-[Your Name]`
-      },
-      {
-        subject: `${formData.tone === 'bold' ? '🚀 ' : ''}${formData.product} for ${formData.audience} - 2 minute read`,
-        body: `Hello [First Name],
+[Your Name]
 
-${formData.tone === 'friendly' ? 'Hope you\'re having a great day!' : formData.tone === 'professional' ? 'I trust this message finds you well.' : 'I\'ve got something that\'ll grab your attention.'}
+P.S. I'd love to share a case study of how we helped [similar company] achieve [specific result].`;
 
-${formData.tone === 'friendly' ? 'I came across your profile and thought' : formData.tone === 'professional' ? 'Based on your role at [Company Name], I believe' : 'Your company needs'} ${formData.product} ${formData.tone === 'friendly' ? 'might be exactly what you need' : formData.tone === 'professional' ? 'could provide significant value' : 'and I can prove it'}.
+      setGeneratedEmail(mockEmail);
+      setIsGenerating(false);
+      toast({
+        title: "Email Generated!",
+        description: "Your cold email has been created successfully.",
+      });
+    }, 2000);
+  };
 
-Specifically for ${formData.audience}, we've seen:
-• ${formData.tone === 'friendly' ? 'Amazing improvements' : formData.tone === 'professional' ? 'Measurable enhancements' : 'Game-changing results'}
-• ${formData.tone === 'friendly' ? 'Great time savings' : formData.tone === 'professional' ? 'Operational efficiency gains' : 'Massive productivity boosts'}
-
-${formData.tone === 'friendly' ? 'Interested in learning more?' : formData.tone === 'professional' ? 'I would welcome the opportunity to discuss this further.' : 'Ready to see what this can do for you?'}
-
-${formData.tone === 'friendly' ? 'Cheers' : formData.tone === 'professional' ? 'Sincerely' : 'Let\'s make it happen'},
-[Your Name]`
-      }
-    ];
-    
-    setGeneratedEmails(mockEmails);
-    setEmailsGenerated(prev => prev + 1);
-    setIsGenerating(false);
-    
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(generatedEmail);
     toast({
-      title: "Emails Generated!",
-      description: "Your cold emails are ready to copy and send."
+      title: "Copied!",
+      description: "Email copied to clipboard.",
     });
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast({
-      title: "Copied!",
-      description: "Email copied to clipboard."
-    });
+  const resetForm = () => {
+    setProductService("");
+    setTargetAudience("");
+    setTone("");
+    setGeneratedEmail("");
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <div className="mb-8">
-        <Button variant="ghost" className="mb-4">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Home
-        </Button>
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-            Email Generator
-          </h1>
-          <div className="text-sm text-gray-500">
-            {emailsGenerated}/10 emails used this month
-          </div>
-        </div>
-      </div>
-      
-      <div className="grid lg:grid-cols-2 gap-8">
-        {/* Input Form */}
-        <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Sparkles className="w-5 h-5 text-blue-600" />
-              <span>Generate Your Cold Email</span>
-            </CardTitle>
-            <CardDescription>
-              Tell us about your product and audience, and we'll craft the perfect cold email
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="product">What are you promoting?</Label>
-              <Textarea
-                id="product"
-                placeholder="e.g., AI-powered project management software that helps teams collaborate 50% faster..."
-                value={formData.product}
-                onChange={(e) => setFormData({...formData, product: e.target.value})}
-                className="min-h-[100px]"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="audience">Who is your target audience?</Label>
-              <Textarea
-                id="audience"
-                placeholder="e.g., CTOs at mid-size tech companies, startup founders, marketing directors..."
-                value={formData.audience}
-                onChange={(e) => setFormData({...formData, audience: e.target.value})}
-                className="min-h-[80px]"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Email tone</Label>
-              <Select value={formData.tone} onValueChange={(value) => setFormData({...formData, tone: value})}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose your email tone" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="friendly">Friendly & Casual</SelectItem>
-                  <SelectItem value="professional">Professional & Formal</SelectItem>
-                  <SelectItem value="bold">Bold & Direct</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <Button 
-              onClick={handleGenerate}
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-              disabled={isGenerating}
-            >
-              {isGenerating ? (
-                <>
-                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Mail className="w-4 h-4 mr-2" />
-                  Generate Emails
-                </>
-              )}
+    <ProtectedRoute>
+      <section className="container mx-auto px-4 py-16">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <Button variant="ghost" onClick={() => window.location.reload()} className="mb-6">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Home
             </Button>
-          </CardContent>
-        </Card>
-        
-        {/* Generated Emails */}
-        <div className="space-y-6">
-          {generatedEmails.length === 0 ? (
-            <Card className="bg-white/50 backdrop-blur-sm border-dashed border-2 border-gray-300">
-              <CardContent className="py-16 text-center">
-                <Mail className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-600 mb-2">Ready to Generate</h3>
-                <p className="text-gray-500">Fill out the form and click generate to see your AI-powered cold emails</p>
+            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 bg-clip-text text-transparent mb-4">
+              AI Email Generator
+            </h1>
+            <p className="text-xl text-gray-600 mb-2">
+              Welcome back, {user?.email}! Generate personalized cold emails in seconds.
+            </p>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-8">
+            {/* Input Form */}
+            <Card className="backdrop-blur-sm bg-white/60 border border-blue-200">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-blue-600" />
+                  Email Details
+                </CardTitle>
+                <CardDescription>
+                  Provide details about your product/service and target audience
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="product">What are you selling?</Label>
+                  <Textarea
+                    id="product"
+                    placeholder="e.g., SaaS platform for project management, digital marketing services, consulting..."
+                    value={productService}
+                    onChange={(e) => setProductService(e.target.value)}
+                    className="min-h-[100px]"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="audience">Who are you targeting?</Label>
+                  <Input
+                    id="audience"
+                    placeholder="e.g., startup founders, marketing managers, HR directors..."
+                    value={targetAudience}
+                    onChange={(e) => setTargetAudience(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="tone">Email tone</Label>
+                  <Select value={tone} onValueChange={setTone}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose your email tone" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="professional">Professional</SelectItem>
+                      <SelectItem value="friendly">Friendly</SelectItem>
+                      <SelectItem value="casual">Casual</SelectItem>
+                      <SelectItem value="direct">Direct</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex gap-3">
+                  <Button 
+                    onClick={handleGenerate}
+                    disabled={isGenerating}
+                    className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Generate Email
+                      </>
+                    )}
+                  </Button>
+                  <Button variant="outline" onClick={resetForm}>
+                    Reset
+                  </Button>
+                </div>
               </CardContent>
             </Card>
-          ) : (
-            generatedEmails.map((email, index) => (
-              <Card key={index} className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">Email Variant {index + 1}</CardTitle>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => copyToClipboard(`Subject: ${email.subject}\n\n${email.body}`)}
-                    >
+
+            {/* Generated Email */}
+            <Card className="backdrop-blur-sm bg-white/60 border border-blue-200">
+              <CardHeader>
+                <CardTitle>Your Generated Email</CardTitle>
+                <CardDescription>
+                  {generatedEmail ? "Copy and customize as needed" : "Your email will appear here"}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {generatedEmail ? (
+                  <div className="space-y-4">
+                    <div className="bg-white/80 p-4 rounded-lg border min-h-[400px] font-mono text-sm whitespace-pre-wrap">
+                      {generatedEmail}
+                    </div>
+                    <Button onClick={copyToClipboard} className="w-full" variant="outline">
                       <Copy className="w-4 h-4 mr-2" />
-                      Copy
+                      Copy to Clipboard
                     </Button>
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label className="text-sm font-medium text-gray-700">Subject Line:</Label>
-                    <div className="mt-1 p-3 bg-blue-50 rounded border border-blue-200 text-sm">
-                      {email.subject}
+                ) : (
+                  <div className="bg-gray-50/80 p-8 rounded-lg border min-h-[400px] flex items-center justify-center">
+                    <div className="text-center text-gray-500">
+                      <Sparkles className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                      <p>Fill out the form and click "Generate Email" to see your personalized cold email here.</p>
                     </div>
                   </div>
-                  <div>
-                    <Label className="text-sm font-medium text-gray-700">Email Body:</Label>
-                    <div className="mt-1 p-4 bg-gray-50 rounded border border-gray-200 text-sm whitespace-pre-wrap font-mono">
-                      {email.body}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
-      </div>
-    </div>
+      </section>
+    </ProtectedRoute>
   );
 };

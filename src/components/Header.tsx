@@ -1,12 +1,23 @@
 
 import { Button } from "@/components/ui/button";
-import { Mail, User } from "lucide-react";
+import { Mail, User, LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface HeaderProps {
   onGetStarted: () => void;
 }
 
 export const Header = ({ onGetStarted }: HeaderProps) => {
+  const { user, signOut } = useAuth();
+
   return (
     <header className="border-b border-white/20 backdrop-blur-sm bg-white/70 sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -26,10 +37,33 @@ export const Header = ({ onGetStarted }: HeaderProps) => {
           <a href="#pricing" className="text-gray-600 hover:text-gray-900 transition-colors">
             Pricing
           </a>
-          <Button variant="ghost" className="text-gray-600 hover:text-gray-900">
-            <User className="w-4 h-4 mr-2" />
-            Sign In
-          </Button>
+          
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="text-gray-600 hover:text-gray-900">
+                  <User className="w-4 h-4 mr-2" />
+                  {user.email}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={signOut}>
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button variant="ghost" className="text-gray-600 hover:text-gray-900" asChild>
+              <a href="/auth">
+                <User className="w-4 h-4 mr-2" />
+                Sign In
+              </a>
+            </Button>
+          )}
+          
           <Button onClick={onGetStarted} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
             Get Started
           </Button>
