@@ -14,6 +14,17 @@ const logStep = (step: string, details?: any) => {
   console.log(`[EMAIL-ANALYZER] ${step}${detailsStr}`);
 };
 
+// Helper function to extract JSON from markdown code blocks
+const extractJsonFromResponse = (response: string): string => {
+  // Remove markdown code blocks if present
+  const jsonMatch = response.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+  if (jsonMatch) {
+    return jsonMatch[1].trim();
+  }
+  // If no code blocks, return the response as-is
+  return response.trim();
+};
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -136,7 +147,7 @@ Email to analyze:
 ${email_content}
 """
 
-Please provide your analysis in the exact JSON format below (no additional text):
+Please provide your analysis in the exact JSON format below (no additional text or markdown formatting):
 
 {
   "overall_score": <number 0-100>,
@@ -222,8 +233,12 @@ Focus on practical, actionable feedback that will improve response rates.`;
     logStep('AI response content', { content: aiResponse });
     
     try {
+      // Extract JSON from potential markdown code blocks
+      const cleanJsonString = extractJsonFromResponse(aiResponse);
+      logStep('Cleaned JSON string', { cleanedContent: cleanJsonString });
+      
       // Parse the JSON response from GPT
-      const analysis = JSON.parse(aiResponse);
+      const analysis = JSON.parse(cleanJsonString);
       
       // Validate the analysis structure
       if (typeof analysis.overall_score !== 'number' || 
