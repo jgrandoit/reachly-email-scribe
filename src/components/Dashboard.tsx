@@ -14,8 +14,14 @@ interface DashboardProps {
 
 export const Dashboard = ({ onStartGenerator }: DashboardProps) => {
   const { user } = useAuth();
-  const { subscribed, subscription_tier, createCheckout, openCustomerPortal } = useSubscription();
+  const { subscribed, subscription_tier, createCheckout, openCustomerPortal, loading } = useSubscription();
   const { usage, loading: usageLoading } = useUsage();
+
+  // Add debugging logs
+  console.log('Dashboard - User:', user?.email);
+  console.log('Dashboard - Subscribed:', subscribed);
+  console.log('Dashboard - Subscription tier:', subscription_tier);
+  console.log('Dashboard - Loading:', loading);
 
   const handleUpgrade = async () => {
     if (subscription_tier === "Starter") {
@@ -35,6 +41,13 @@ export const Dashboard = ({ onStartGenerator }: DashboardProps) => {
           <p className="text-gray-600">
             Your AI-powered cold email generation dashboard
           </p>
+          {/* Debug info */}
+          <div className="mt-4 p-4 bg-gray-100 rounded-lg text-sm">
+            <p><strong>Debug Info:</strong></p>
+            <p>Subscribed: {subscribed ? 'Yes' : 'No'}</p>
+            <p>Tier: {subscription_tier || 'None'}</p>
+            <p>Loading: {loading ? 'Yes' : 'No'}</p>
+          </div>
         </div>
 
         <div className="grid md:grid-cols-3 gap-6 mb-8">
@@ -59,6 +72,7 @@ export const Dashboard = ({ onStartGenerator }: DashboardProps) => {
                   size="sm"
                   onClick={openCustomerPortal}
                   className="mt-3 w-full"
+                  disabled={loading}
                 >
                   Manage Plan
                 </Button>
@@ -175,12 +189,14 @@ export const Dashboard = ({ onStartGenerator }: DashboardProps) => {
                   onClick={() => createCheckout("starter")}
                   variant="outline"
                   className="flex-1"
+                  disabled={loading}
                 >
                   Choose Starter
                 </Button>
                 <Button
                   onClick={() => createCheckout("pro")}
                   className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                  disabled={loading}
                 >
                   Choose Pro
                 </Button>

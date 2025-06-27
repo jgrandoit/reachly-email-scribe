@@ -30,23 +30,34 @@ export const SubscriptionProvider = ({ children }: { children: React.ReactNode }
   });
 
   const checkSubscription = async () => {
-    if (!user || !session) return;
+    if (!user || !session) {
+      console.log('No user or session, skipping subscription check');
+      return;
+    }
     
     setLoading(true);
     try {
+      console.log('Checking subscription for user:', user.email);
       const { data, error } = await supabase.functions.invoke('check-subscription', {
         headers: {
           Authorization: `Bearer ${session.access_token}`,
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error from check-subscription function:', error);
+        throw error;
+      }
       
-      setSubscriptionData({
+      console.log('Subscription data received:', data);
+      const newSubscriptionData = {
         subscribed: data.subscribed || false,
         subscription_tier: data.subscription_tier || null,
         subscription_end: data.subscription_end || null,
-      });
+      };
+      
+      console.log('Setting subscription data:', newSubscriptionData);
+      setSubscriptionData(newSubscriptionData);
     } catch (error) {
       console.error('Error checking subscription:', error);
       toast({
@@ -128,11 +139,25 @@ export const SubscriptionProvider = ({ children }: { children: React.ReactNode }
     }
   };
 
+  // Check subscription when user or session changes
   useEffect(() => {
     if (user && session) {
+      console.log('User and session available, checking subscription');
       checkSubscription();
+    } else {
+      console.log('No user or session, resetting subscription data');
+      setSubscriptionData({
+        subscribed: false,
+        subscription_tier: null,
+        subscription_end: null,
+      });
     }
   }, [user, session]);
+
+  // Additional effect to log subscription data changes
+  useEffect(() => {
+    console.log('Subscription data updated:', subscriptionData);
+  }, [subscriptionData]);
 
   const value = {
     ...subscriptionData,
