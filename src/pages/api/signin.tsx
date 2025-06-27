@@ -1,4 +1,5 @@
-/* import { useEffect } from "react";
+
+import { useEffect } from "react";
 import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { app } from "@/lib/firebase"; // this might be '@/firebase' or '@/utils/firebase'
 import { useRouter } from "next/router";
@@ -23,4 +24,3 @@ export default function SignInPage() {
 
   return <p>Signing you in with Google...</p>;
 }
-\
