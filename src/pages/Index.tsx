@@ -60,20 +60,13 @@ const Index = () => {
     }
   };
 
-  const handleBackToHome = () => {
-    console.log("Back to home clicked, user:", !!user, "current view:", currentView);
-    // Always go to home page when logo is clicked
-    console.log("Setting view to: home");
-    setCurrentView("home");
-  };
-
   console.log("Current view:", currentView, "User logged in:", !!user);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
       <Header 
         onGetStarted={handleGetStarted}
-        onBackToHome={handleBackToHome}
+        onBackToHome={() => setCurrentView("home")}
         currentView={currentView}
       />
       
