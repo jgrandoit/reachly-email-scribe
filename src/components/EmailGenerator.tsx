@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { supabase } from "@/integrations/supabase/client";
 
 const industryPrompts = [
   { value: "saas", label: "SaaS & Tech", prompt: "SaaS platform for project management that helps teams collaborate more efficiently" },
@@ -77,36 +77,37 @@ export const EmailGenerator = () => {
     setGeneratedEmail("");
 
     try {
-      const res = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const res = await supabase.functions.invoke('generate-email', {
+        body: {
           product: productService,
           audience: targetAudience,
           tone,
-        }),
+        },
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        },
       });
 
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
+      if (res.error) {
+        throw new Error(res.error.message || 'Failed to generate email');
       }
 
-      const data = await res.json();
-
-      if (data?.result) {
-        setGeneratedEmail(data.result);
+      if (res.data?.result) {
+        setGeneratedEmail(res.data.result);
         toast({
           title: "Email Generated!",
           description: "Your cold email has been created successfully.",
         });
       } else {
-        throw new Error(data?.error || "No response from API");
+        throw new Error("No response from API");
       }
     } catch (err: any) {
       console.error("Generation error:", err);
       toast({
         title: "Generation Failed",
-        description: "Failed to generate email. Please try again.",
+        description: err.message || "Failed to generate email. Please try again.",
         variant: "destructive",
       });
     } finally {
