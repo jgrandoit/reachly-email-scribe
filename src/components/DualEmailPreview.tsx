@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { EmailAnalyzer } from "./EmailAnalyzer";
+import { analytics, trackEmailGenerated } from "@/utils/analytics";
 
 interface DualEmailPreviewProps {
   emailA: string;
@@ -41,6 +42,12 @@ export const DualEmailPreview = ({
 
   const copyToClipboard = (email: string, option: string) => {
     navigator.clipboard.writeText(email);
+    analytics.track('email_copied', { 
+      option, 
+      tone, 
+      productService: productService.substring(0, 50),
+      targetAudience: targetAudience.substring(0, 50)
+    }, user?.id);
     toast({
       title: "Copied!",
       description: `${option} copied to clipboard.`,
@@ -68,6 +75,15 @@ export const DualEmailPreview = ({
 
       if (error) throw error;
 
+      // Track the rating
+      analytics.track('email_rated', {
+        framework,
+        rating,
+        tone,
+        productService: productService.substring(0, 50),
+        targetAudience: targetAudience.substring(0, 50)
+      }, user.id);
+
       if (framework === 'persuasive_pitch') {
         setRatingA(rating);
       } else {
@@ -93,7 +109,18 @@ export const DualEmailPreview = ({
   };
 
   const handleUpgrade = async () => {
+    analytics.track('upgrade_clicked', { from: 'dual_email_preview' }, user?.id);
     await createCheckout("pro");
+  };
+
+  const handleRegenerate = () => {
+    analytics.track('email_regenerated', {
+      tone,
+      productService: productService.substring(0, 50),
+      targetAudience: targetAudience.substring(0, 50),
+      isPro
+    }, user?.id);
+    onRegenerate();
   };
 
   if (!emailA && !emailB) {
@@ -123,7 +150,7 @@ export const DualEmailPreview = ({
               <CardTitle className="flex items-center justify-between">
                 <span className="text-blue-600">{isPro ? 'Option A: Persuasive Pitch' : 'Your Generated Email'}</span>
                 <Button 
-                  onClick={onRegenerate} 
+                  onClick={handleRegenerate} 
                   variant="outline" 
                   size="sm"
                   disabled={!canRegenerate}

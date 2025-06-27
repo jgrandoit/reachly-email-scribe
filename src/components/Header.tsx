@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Mail, User, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "react-router-dom";
+import { analytics, trackPageView, trackAuth } from "@/utils/analytics";
+import { useEffect } from "react";
 
 interface HeaderProps {
   onGetStarted: () => void;
@@ -13,11 +15,30 @@ interface HeaderProps {
 export const Header = ({ onGetStarted, onBackToHome, currentView }: HeaderProps) => {
   const { user, signOut } = useAuth();
 
+  useEffect(() => {
+    trackPageView(currentView, user?.id);
+  }, [currentView, user?.id]);
+
+  const handleSignOut = () => {
+    trackAuth('logout', user?.id);
+    signOut();
+  };
+
+  const handleGetStarted = () => {
+    analytics.track('get_started_clicked', { from: 'header', authenticated: !!user }, user?.id);
+    onGetStarted();
+  };
+
+  const handleBackToHome = () => {
+    analytics.track('back_to_home_clicked', { from: currentView }, user?.id);
+    onBackToHome();
+  };
+
   return (
     <header className="w-full border-b border-white/20 backdrop-blur-sm bg-white/80 sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <button
-          onClick={onBackToHome}
+          onClick={handleBackToHome}
           className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
         >
           <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
@@ -34,6 +55,7 @@ export const Header = ({ onGetStarted, onBackToHome, currentView }: HeaderProps)
               <Link 
                 to="/examples" 
                 className="text-gray-600 hover:text-gray-900 transition-colors"
+                onClick={() => analytics.track('examples_link_clicked', {}, user.id)}
               >
                 Examples
               </Link>
@@ -45,7 +67,7 @@ export const Header = ({ onGetStarted, onBackToHome, currentView }: HeaderProps)
                 </div>
                 
                 <Button
-                  onClick={signOut}
+                  onClick={handleSignOut}
                   variant="outline"
                   size="sm"
                   className="flex items-center space-x-2"
@@ -60,17 +82,22 @@ export const Header = ({ onGetStarted, onBackToHome, currentView }: HeaderProps)
               <Link 
                 to="/examples" 
                 className="text-gray-600 hover:text-gray-900 transition-colors"
+                onClick={() => analytics.track('examples_link_clicked')}
               >
                 Examples
               </Link>
               
               <div className="flex items-center space-x-4">
                 <Link to="/auth">
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => analytics.track('signin_link_clicked')}
+                  >
                     Sign In
                   </Button>
                 </Link>
-                <Button onClick={onGetStarted} size="sm">
+                <Button onClick={handleGetStarted} size="sm">
                   Get Started
                 </Button>
               </div>

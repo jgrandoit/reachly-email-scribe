@@ -9,9 +9,11 @@ import { Header } from "@/components/Header";
 import { Hero } from "@/components/Hero";
 import { Features } from "@/components/Features";
 import { Pricing } from "@/components/Pricing";
+import { AnalyticsDashboard } from "@/components/AnalyticsDashboard";
+import { trackAuth } from "@/utils/analytics";
 
 const Index = () => {
-  const [currentView, setCurrentView] = useState<"home" | "dashboard" | "generator">("home");
+  const [currentView, setCurrentView] = useState<"home" | "dashboard" | "generator" | "analytics">("home");
   const { toast } = useToast();
   const { checkSubscription } = useSubscription();
   const { user, loading } = useAuth();
@@ -45,6 +47,7 @@ const Index = () => {
   useEffect(() => {
     if (user && currentView === "home") {
       setCurrentView("dashboard");
+      trackAuth('login', user.id);
     } else if (!user && currentView !== "home") {
       setCurrentView("home");
     }
@@ -107,10 +110,19 @@ const Index = () => {
       )}
 
       {currentView === "dashboard" && user && (
-        <Dashboard onStartGenerator={() => setCurrentView("generator")} />
+        <Dashboard 
+          onStartGenerator={() => setCurrentView("generator")}
+          onViewAnalytics={() => setCurrentView("analytics")}
+        />
       )}
 
       {currentView === "generator" && <EmailGenerator />}
+
+      {currentView === "analytics" && user && (
+        <div className="container mx-auto px-4 py-8">
+          <AnalyticsDashboard />
+        </div>
+      )}
     </div>
   );
 };
