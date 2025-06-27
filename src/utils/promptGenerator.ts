@@ -32,7 +32,8 @@ Use the PERSUASIVE PITCH approach (AIDA framework):
 
 Make it feel like it was written specifically for this person, not a mass email.`;
 
-  const promptB = `${baseInstructions}
+  // Only generate prompt B for Pro users
+  const promptB = config.tier === 'pro' ? `${baseInstructions}
 
 Use the PROBLEM-SOLUTION approach:
 - Problem: Identify a specific pain point they likely face
@@ -40,7 +41,7 @@ Use the PROBLEM-SOLUTION approach:
 - Benefit: Highlight the key outcome they'll get
 - Action: Simple, low-friction next step
 
-Focus on problems that keep them up at night, then position your solution as the relief.`;
+Focus on problems that keep them up at night, then position your solution as the relief.` : '';
 
   return { promptA, promptB };
 };

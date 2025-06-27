@@ -100,12 +100,12 @@ export const DualEmailPreview = ({
     return (
       <Card className="backdrop-blur-sm bg-white/60 border border-blue-200">
         <CardHeader>
-          <CardTitle>Your Generated Emails</CardTitle>
+          <CardTitle>Your Generated Email{isPro ? 's' : ''}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="bg-gray-50/80 p-8 rounded-lg border min-h-[400px] flex items-center justify-center">
             <div className="text-center text-gray-500">
-              <p>Configure your settings and generate your emails to see the previews here.</p>
+              <p>Configure your settings and generate your email{isPro ? 's' : ''} to see the preview{isPro ? 's' : ''} here.</p>
             </div>
           </div>
         </CardContent>
@@ -121,7 +121,7 @@ export const DualEmailPreview = ({
           <Card className="backdrop-blur-sm bg-white/60 border border-blue-200">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                <span className="text-blue-600">Option A: Persuasive Pitch</span>
+                <span className="text-blue-600">{isPro ? 'Option A: Persuasive Pitch' : 'Your Generated Email'}</span>
                 <Button 
                   onClick={onRegenerate} 
                   variant="outline" 
@@ -129,12 +129,14 @@ export const DualEmailPreview = ({
                   disabled={!canRegenerate}
                 >
                   <RefreshCw className="w-4 h-4 mr-2" />
-                  Regenerate Both
+                  Regenerate{isPro ? ' Both' : ''}
                 </Button>
               </CardTitle>
-              <p className="text-sm text-gray-600">
-                AIDA framework - Attention, Interest, Desire, Action
-              </p>
+              {isPro && (
+                <p className="text-sm text-gray-600">
+                  AIDA framework - Attention, Interest, Desire, Action
+                </p>
+              )}
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="bg-white/80 p-4 rounded-lg border min-h-[200px] font-mono text-sm whitespace-pre-wrap">
@@ -143,13 +145,13 @@ export const DualEmailPreview = ({
               
               <div className="flex gap-2">
                 <Button 
-                  onClick={() => copyToClipboard(emailA, "Option A")} 
+                  onClick={() => copyToClipboard(emailA, isPro ? "Option A" : "Email")} 
                   className="flex-1" 
                   variant="outline"
                   disabled={!emailA}
                 >
                   <Copy className="w-4 h-4 mr-2" />
-                  Copy Option A
+                  Copy {isPro ? 'Option A' : 'Email'}
                 </Button>
               </div>
 
@@ -200,79 +202,98 @@ export const DualEmailPreview = ({
         </div>
       </div>
 
-      {/* Option B - Problem/Solution */}
-      <div className="grid lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <Card className="backdrop-blur-sm bg-white/60 border border-blue-200">
-            <CardHeader>
-              <CardTitle className="text-indigo-600">Option B: Problem/Solution</CardTitle>
-              <p className="text-sm text-gray-600">
-                Direct approach - Problem identification and solution presentation
-              </p>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="bg-white/80 p-4 rounded-lg border min-h-[200px] font-mono text-sm whitespace-pre-wrap">
-                {emailB || "Generating..."}
-              </div>
-              
-              <div className="flex gap-2">
-                <Button 
-                  onClick={() => copyToClipboard(emailB, "Option B")} 
-                  className="flex-1" 
-                  variant="outline"
-                  disabled={!emailB}
-                >
-                  <Copy className="w-4 h-4 mr-2" />
-                  Copy Option B
-                </Button>
-              </div>
-
-              {emailB && (
-                <div className="border-t pt-4">
-                  <p className="text-sm font-medium mb-3">Rate this email:</p>
-                  <div className="flex gap-3">
-                    <Button
-                      onClick={() => handleRating(emailB, 'problem_solution', 'useful')}
-                      disabled={isRating || ratingB !== null}
-                      variant={ratingB ? "secondary" : "outline"}
-                      className="flex-1"
-                    >
-                      <ThumbsUp className="w-4 h-4 mr-2" />
-                      🔥 Useful
-                    </Button>
-                    <Button
-                      onClick={() => handleRating(emailB, 'problem_solution', 'needs_work')}
-                      disabled={isRating || ratingB !== null}
-                      variant={ratingB ? "secondary" : "outline"}
-                      className="flex-1"
-                    >
-                      <Wrench className="w-4 h-4 mr-2" />
-                      🛠 Needs work
-                    </Button>
-                  </div>
-                  {ratingB && (
-                    <p className="text-xs text-green-600 mt-2 text-center">
-                      ✅ Thanks for your feedback!
-                    </p>
-                  )}
+      {/* Option B - Problem/Solution (Pro Only) */}
+      {isPro && (
+        <div className="grid lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <Card className="backdrop-blur-sm bg-white/60 border border-blue-200">
+              <CardHeader>
+                <CardTitle className="text-indigo-600">Option B: Problem/Solution</CardTitle>
+                <p className="text-sm text-gray-600">
+                  Direct approach - Problem identification and solution presentation
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="bg-white/80 p-4 rounded-lg border min-h-[200px] font-mono text-sm whitespace-pre-wrap">
+                  {emailB || "Generating..."}
                 </div>
-              )}
-            </CardContent>
-          </Card>
+                
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={() => copyToClipboard(emailB, "Option B")} 
+                    className="flex-1" 
+                    variant="outline"
+                    disabled={!emailB}
+                  >
+                    <Copy className="w-4 h-4 mr-2" />
+                    Copy Option B
+                  </Button>
+                </div>
+
+                {emailB && (
+                  <div className="border-t pt-4">
+                    <p className="text-sm font-medium mb-3">Rate this email:</p>
+                    <div className="flex gap-3">
+                      <Button
+                        onClick={() => handleRating(emailB, 'problem_solution', 'useful')}
+                        disabled={isRating || ratingB !== null}
+                        variant={ratingB ? "secondary" : "outline"}
+                        className="flex-1"
+                      >
+                        <ThumbsUp className="w-4 h-4 mr-2" />
+                        🔥 Useful
+                      </Button>
+                      <Button
+                        onClick={() => handleRating(emailB, 'problem_solution', 'needs_work')}
+                        disabled={isRating || ratingB !== null}
+                        variant={ratingB ? "secondary" : "outline"}
+                        className="flex-1"
+                      >
+                        <Wrench className="w-4 h-4 mr-2" />
+                        🛠 Needs work
+                      </Button>
+                    </div>
+                    {ratingB && (
+                      <p className="text-xs text-green-600 mt-2 text-center">
+                        ✅ Thanks for your feedback!
+                      </p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+          
+          {/* Email Analyzer for Option B */}
+          <div className="lg:col-span-1">
+            {emailB && (
+              <EmailAnalyzer 
+                email={emailB} 
+                emailType="B" 
+                isPro={isPro}
+                onUpgrade={handleUpgrade}
+              />
+            )}
+          </div>
         </div>
-        
-        {/* Email Analyzer for Option B */}
-        <div className="lg:col-span-1">
-          {emailB && (
-            <EmailAnalyzer 
-              email={emailB} 
-              emailType="B" 
-              isPro={isPro}
-              onUpgrade={handleUpgrade}
-            />
-          )}
-        </div>
-      </div>
+      )}
+
+      {/* Upgrade prompt for non-Pro users */}
+      {!isPro && (
+        <Card className="backdrop-blur-sm bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200">
+          <CardContent className="p-6 text-center">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Want A/B Testing for Your Emails?
+            </h3>
+            <p className="text-gray-600 mb-4">
+              Upgrade to Pro to generate two different email approaches and see which performs better.
+            </p>
+            <Button onClick={handleUpgrade} className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
+              Upgrade to Pro
+            </Button>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
