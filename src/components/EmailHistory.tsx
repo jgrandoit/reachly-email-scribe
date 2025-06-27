@@ -89,18 +89,22 @@ export const EmailHistory = ({ onEditEmail }: EmailHistoryProps) => {
         timestamp: Date.now()
       }));
       
-      // Use the callback prop to navigate to generator if provided
+      toast({
+        title: "Loading Email for Editing",
+        description: "Email loaded into generator for editing...",
+      });
+
+      // Use the callback prop to navigate to generator immediately
       if (onEditEmail) {
-        onEditEmail(email);
+        // Use setTimeout to ensure localStorage is saved before navigation
+        setTimeout(() => {
+          onEditEmail(email);
+        }, 0);
       } else {
         // Fallback: reload to trigger the restoration
         window.location.reload();
       }
       
-      toast({
-        title: "Loading Email for Editing",
-        description: "Email loaded into generator for editing...",
-      });
     } catch (error) {
       console.error('Error loading email for editing:', error);
       toast({
