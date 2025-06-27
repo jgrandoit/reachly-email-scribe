@@ -201,23 +201,23 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
-          <Link to="/" className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-4">
-            <ArrowLeft className="w-4 h-4 mr-2" />
+      <div className="w-full max-w-sm sm:max-w-md">
+        <div className="mb-8 mt-6 text-center">
+          <Link to="/" className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-6 text-base">
+            <ArrowLeft className="w-5 h-5 mr-2" />
             Back to home
           </Link>
-          <div className="flex items-center justify-center space-x-2 mb-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-              <Mail className="w-5 h-5 text-white" />
+          <div className="flex items-center justify-center space-x-3 mb-2">
+            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
+              <Mail className="w-6 h-6 text-white" />
             </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            <span className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
               Reachly
             </span>
           </div>
         </div>
 
-        <Card className="backdrop-blur-sm bg-white/80 border border-white/20">
+        <Card className="backdrop-blur-sm bg-white/80 border border-white/20 w-full">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-bold">
               {isLogin ? "Welcome back" : "Create your account"}
@@ -242,7 +242,7 @@ const Auth = () => {
                       placeholder="Enter your full name"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      className="pl-10"
+                      className="pl-12 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 transition-all duration-200"
                       required={!isLogin}
                     />
                   </div>
@@ -259,7 +259,7 @@ const Auth = () => {
                     placeholder="Enter your email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
+                    className="pl-12 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 transition-all duration-200"
                     required
                   />
                 </div>
@@ -275,7 +275,7 @@ const Auth = () => {
                     placeholder="Enter your password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10"
+                    className="pl-12 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 transition-all duration-200"
                     required
                     minLength={6}
                   />
@@ -303,8 +303,8 @@ const Auth = () => {
                 className="text-blue-600 hover:text-blue-700 text-sm"
               >
                 {isLogin 
-                  ? "Don't have an account? Sign up" 
-                  : "Already have an account? Sign in"
+                  ? <>Don't have an account? <span className="font-medium hover:underline">Sign up</span></> 
+                  : <>Already have an account? <span className="font-medium hover:underline">Sign in</span></>
                 }
               </button>
             </div>
