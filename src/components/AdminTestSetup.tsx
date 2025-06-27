@@ -48,9 +48,7 @@ export const AdminTestSetup = () => {
           emailRedirectTo: `${window.location.origin}/`,
           data: {
             full_name: account.fullName,
-          },
-          // Skip email confirmation for test accounts
-          email_confirm: false
+          }
         },
       });
 
@@ -166,7 +164,7 @@ export const AdminTestSetup = () => {
         <CardHeader>
           <CardTitle>Test Account Setup Utility</CardTitle>
           <CardDescription>
-            Create and configure test accounts for different subscription tiers (email verification disabled for testing)
+            Create and configure test accounts for different subscription tiers. Note: You'll need to disable email confirmation in your Supabase project settings for these accounts to work immediately.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -206,7 +204,7 @@ export const AdminTestSetup = () => {
             </div>
             
             <p className="text-gray-600">
-              This will create user accounts through the authentication system with email verification disabled for testing purposes.
+              This will create user accounts through the authentication system. You may need to confirm these accounts via email depending on your Supabase settings.
             </p>
             
             <Button 
@@ -245,6 +243,11 @@ export const AdminTestSetup = () => {
 
           {/* Instructions */}
           <div className="bg-blue-50 p-4 rounded-lg">
+            <h4 className="font-semibold text-blue-900 mb-2">Setup Instructions:</h4>
+            <ul className="text-blue-800 text-sm space-y-1 mb-3">
+              <li>• <strong>Before creating accounts:</strong> Go to your Supabase project → Authentication → Settings → and disable "Enable email confirmations"</li>
+              <li>• This will allow test accounts to be used immediately without email verification</li>
+            </ul>
             <h4 className="font-semibold text-blue-900 mb-2">After Setup:</h4>
             <ul className="text-blue-800 text-sm space-y-1">
               <li>• Sign out of your current account</li>
@@ -253,7 +256,6 @@ export const AdminTestSetup = () => {
               <li>• Free tier: 10 emails/month limit</li>
               <li>• Starter tier: 50 emails/month limit</li>
               <li>• Pro tier: Unlimited emails</li>
-              <li>• <strong>Note:</strong> Email verification is disabled for these test accounts</li>
             </ul>
           </div>
         </CardContent>
