@@ -10,21 +10,21 @@ import { useAuth } from "@/hooks/useAuth";
 
 const testAccounts = [
   {
-    email: "free-user@example.com",
+    email: "testfree@gmail.com",
     password: "testpassword123",
     fullName: "Free User",
     tier: "free",
     description: "Free plan user (10 emails/month)"
   },
   {
-    email: "starter-user@example.com", 
+    email: "teststarter@gmail.com", 
     password: "testpassword123",
     fullName: "Starter User",
     tier: "starter",
     description: "Starter plan user (50 emails/month)"
   },
   {
-    email: "pro-user@example.com",
+    email: "testpro@gmail.com",
     password: "testpassword123", 
     fullName: "Pro User",
     tier: "pro",
