@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -11,6 +10,7 @@ import { Features } from "@/components/Features";
 import { Pricing } from "@/components/Pricing";
 import { AnalyticsDashboard } from "@/components/AnalyticsDashboard";
 import { trackAuth } from "@/utils/analytics";
+import { Footer } from "@/components/Footer";
 
 const ADMIN_EMAIL = "blessup127@gmail.com";
 
@@ -114,7 +114,7 @@ const Index = () => {
       />
       
       {currentView === "home" && (
-        <div className="pb-20">
+        <div>
           <Hero onGetStarted={handleGetStarted} />
           <div className="pt-10 pb-14">
             <Features />
@@ -122,6 +122,7 @@ const Index = () => {
           <div className="pt-10 pb-14">
             <Pricing onGetStarted={handleGetStarted} />
           </div>
+          <Footer />
         </div>
       )}
 
