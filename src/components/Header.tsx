@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Settings } from "lucide-react";
@@ -27,7 +26,7 @@ export const Header = ({ onGetStarted, onBackToHome, currentView }: HeaderProps)
             className="text-2xl font-bold text-gray-900 cursor-pointer"
             onClick={onBackToHome}
           >
-            EmailCraft AI
+            Reachly AI
           </div>
         </div>
 
