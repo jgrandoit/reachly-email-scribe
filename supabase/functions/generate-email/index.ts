@@ -45,7 +45,7 @@ serve(async (req) => {
     logStep("Function started");
     
     const requestBody = await req.json();
-    const { prompt, product, audience, tone } = requestBody;
+    const { prompt, product, audience, tone, customHook, framework } = requestBody;
 
     // Support both new prompt-based system and legacy system
     if (!prompt && (!product || !audience || !tone)) {
@@ -181,6 +181,30 @@ Requirements:
     }
 
     const aiText = data.choices[0].message.content;
+    
+    // Extract subject line from the generated content (assuming it's on the first line)
+    const lines = aiText.split('\n');
+    const subjectLine = lines.find(line => line.toLowerCase().includes('subject:') || line.toLowerCase().includes('subject line:'))
+      ?.replace(/subject:?\s*/i, '').trim() || lines[0]?.trim();
+    
+    // Store the generated email in the database
+    const { error: insertError } = await supabaseClient
+      .from('generated_emails')
+      .insert({
+        user_id: user.id,
+        subject_line: subjectLine,
+        email_content: aiText,
+        product_service: product || 'Generated via prompt',
+        target_audience: audience || 'Custom audience',
+        tone: tone || 'professional',
+        custom_hook: customHook || null,
+        framework: framework || 'custom'
+      });
+
+    if (insertError) {
+      console.error('Error storing generated email:', insertError);
+      // Don't fail the request if storage fails, but log it
+    }
     
     // Increment user usage
     await supabaseClient.rpc('increment_user_usage', { p_user_id: user.id });

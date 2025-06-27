@@ -6,6 +6,7 @@ import { Mail, Crown, Zap, ArrowRight } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useUsage } from "@/hooks/useUsage";
+import { EmailHistory } from "./EmailHistory";
 
 interface DashboardProps {
   onStartGenerator: () => void;
@@ -26,7 +27,7 @@ export const Dashboard = ({ onStartGenerator }: DashboardProps) => {
 
   return (
     <div className="container mx-auto px-4 py-16">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Welcome back, {user?.email?.split('@')[0]}!
@@ -132,6 +133,11 @@ export const Dashboard = ({ onStartGenerator }: DashboardProps) => {
               )}
             </CardContent>
           </Card>
+        </div>
+
+        {/* Email History Section */}
+        <div className="mb-8">
+          <EmailHistory />
         </div>
 
         {/* Upgrade Section for Free Users */}

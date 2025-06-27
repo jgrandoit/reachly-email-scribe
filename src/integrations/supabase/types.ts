@@ -48,6 +48,45 @@ export type Database = {
         }
         Relationships: []
       }
+      generated_emails: {
+        Row: {
+          created_at: string
+          custom_hook: string | null
+          email_content: string
+          framework: string | null
+          id: string
+          product_service: string | null
+          subject_line: string | null
+          target_audience: string | null
+          tone: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          custom_hook?: string | null
+          email_content: string
+          framework?: string | null
+          id?: string
+          product_service?: string | null
+          subject_line?: string | null
+          target_audience?: string | null
+          tone?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          custom_hook?: string | null
+          email_content?: string
+          framework?: string | null
+          id?: string
+          product_service?: string | null
+          subject_line?: string | null
+          target_audience?: string | null
+          tone?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
