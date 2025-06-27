@@ -75,7 +75,7 @@ export const Pricing = ({ onGetStarted }: PricingProps) => {
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12 max-w-6xl mx-auto">
         {pricingPlans.map((plan) => (
           <PricingCard
             key={plan.id}

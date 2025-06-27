@@ -60,7 +60,7 @@ export const PricingCard = ({
       <div className="text-4xl font-bold text-gray-900 mt-4">{price}</div>
       <CardDescription className="text-gray-600">{description}</CardDescription>
     </CardHeader>
-    <CardContent className="space-y-4">
+    <CardContent className="space-y-4 p-4 pt-0">
       <ul className="space-y-3">
         {features.map((feature, index) => (
           <li key={index} className="flex items-center gap-3 text-gray-700">

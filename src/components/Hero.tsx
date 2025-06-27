@@ -19,14 +19,14 @@ export const Hero = ({ onGetStarted }: HeroProps) => {
           <span className="text-sm font-medium text-blue-800">AI-Powered Cold Email Generator</span>
         </div>
         
-        <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 bg-clip-text text-transparent mb-6">
+        <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 bg-clip-text text-transparent mb-4">
           Write Perfect Cold Emails in
           <span className="block bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
             30 Seconds
           </span>
         </h1>
         
-        <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
+        <p className="text-xl text-gray-600 mb-6 max-w-2xl mx-auto leading-relaxed">
           Reachly writes high-converting cold emails for you — instantly. 
           Just tell us what you're offering and who you're targeting.
         </p>
