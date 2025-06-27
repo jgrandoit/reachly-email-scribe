@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { Mail, Crown, Zap, ArrowRight } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useUsage } from "@/hooks/useUsage";
 
 interface DashboardProps {
   onStartGenerator: () => void;
@@ -13,11 +14,7 @@ interface DashboardProps {
 export const Dashboard = ({ onStartGenerator }: DashboardProps) => {
   const { user } = useAuth();
   const { subscribed, subscription_tier, createCheckout, openCustomerPortal } = useSubscription();
-
-  // Mock data for emails generated this month (you can replace with real data)
-  const emailsGenerated = 3;
-  const emailLimit = subscribed ? (subscription_tier === "Pro" ? "Unlimited" : 50) : 10;
-  const progressValue = typeof emailLimit === "number" ? (emailsGenerated / emailLimit) * 100 : 30;
+  const { usage, loading: usageLoading } = useUsage();
 
   const handleUpgrade = async () => {
     if (subscription_tier === "Starter") {
@@ -68,7 +65,7 @@ export const Dashboard = ({ onStartGenerator }: DashboardProps) => {
             </CardContent>
           </Card>
 
-          {/* Emails Generated */}
+          {/* Emails Generated - Now using real data */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
@@ -77,22 +74,33 @@ export const Dashboard = ({ onStartGenerator }: DashboardProps) => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600 mb-1">
-                {emailsGenerated}
-                {typeof emailLimit === "number" && (
-                  <span className="text-sm text-gray-500 font-normal">
-                    /{emailLimit}
-                  </span>
-                )}
-              </div>
-              <p className="text-sm text-gray-600 mb-3">
-                {typeof emailLimit === "number" 
-                  ? `${emailLimit - emailsGenerated} emails remaining`
-                  : "Unlimited emails"
-                }
-              </p>
-              {typeof emailLimit === "number" && (
-                <Progress value={progressValue} className="h-2" />
+              {usageLoading ? (
+                <div className="text-sm text-gray-500">Loading usage...</div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold text-green-600 mb-1">
+                    {usage.current}
+                    {usage.limit !== -1 && (
+                      <span className="text-sm text-gray-500 font-normal">
+                        /{usage.limit}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-600 mb-3">
+                    {usage.limit === -1 
+                      ? "Unlimited emails"
+                      : `${Math.max(0, usage.limit - usage.current)} emails remaining`
+                    }
+                  </p>
+                  {usage.limit !== -1 && (
+                    <Progress value={usage.percentage} className="h-2" />
+                  )}
+                  {!usage.canGenerate && (
+                    <p className="text-xs text-red-600 mt-2">
+                      Monthly limit reached - upgrade to continue
+                    </p>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
@@ -111,11 +119,17 @@ export const Dashboard = ({ onStartGenerator }: DashboardProps) => {
               </p>
               <Button
                 onClick={onStartGenerator}
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                disabled={!usage.canGenerate}
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50"
               >
                 Create Email
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
+              {!usage.canGenerate && (
+                <p className="text-xs text-gray-500 mt-2 text-center">
+                  Upgrade your plan to generate more emails
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>
