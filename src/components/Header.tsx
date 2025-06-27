@@ -23,14 +23,17 @@ export const Header = ({ onGetStarted, onBackToHome, currentView }: HeaderProps)
   return (
     <header className="border-b border-white/20 backdrop-blur-sm bg-white/70 sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-        <div className="flex items-center space-x-2">
+        <button 
+          onClick={onBackToHome}
+          className="flex items-center space-x-2 cursor-pointer hover:opacity-80 transition-opacity"
+        >
           <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
             <Mail className="w-5 h-5 text-white" />
           </div>
           <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
             Reachly
           </span>
-        </div>
+        </button>
         
         <nav className="hidden md:flex items-center space-x-8">
           {user ? (
