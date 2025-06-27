@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -14,7 +15,7 @@ interface PricingCardProps {
       note?: string;
       highlight?: boolean;
     }[];
-    buttonVariant?: "default" | "outline" | "ghost" | "link";
+    buttonVariant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link" | "primary";
     mostPopular?: boolean;
     highlight?: boolean;
   };
@@ -26,6 +27,12 @@ export const PricingCard = ({ plan, onUpgrade }: PricingCardProps) => {
   
   const isCurrentPlan = subscribed && 
     subscription_tier?.toLowerCase() === plan.id.toLowerCase();
+
+  // Map "primary" to "default" for shadcn/ui Button compatibility
+  const getButtonVariant = (variant?: string) => {
+    if (variant === "primary") return "default";
+    return variant as "default" | "destructive" | "outline" | "secondary" | "ghost" | "link" | undefined;
+  };
 
   return (
     <Card className={`relative ${plan.highlight ? 'ring-2 ring-blue-500 scale-105' : ''}`}>
@@ -73,7 +80,7 @@ export const PricingCard = ({ plan, onUpgrade }: PricingCardProps) => {
         
         <Button 
           className="w-full" 
-          variant={plan.buttonVariant || "default"}
+          variant={getButtonVariant(plan.buttonVariant)}
           onClick={() => onUpgrade(plan.id)}
           disabled={isCurrentPlan}
         >
