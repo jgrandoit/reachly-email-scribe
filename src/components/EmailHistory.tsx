@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Copy, Trash2, Mail, Calendar } from "lucide-react";
+import { Copy, Trash2, Mail, Calendar, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -132,12 +131,17 @@ export const EmailHistory = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Alert>
-            <Mail className="h-4 w-4" />
-            <AlertDescription>
-              No emails generated yet. Start creating your first cold email to see it here!
-            </AlertDescription>
-          </Alert>
+          <div className="text-center py-12">
+            <div className="relative inline-flex items-center justify-center w-16 h-16 mb-4">
+              <Mail className="w-8 h-8 text-blue-300" />
+              <Sparkles className="w-4 h-4 text-blue-500 absolute -top-1 -right-1 animate-pulse" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No emails yet?</h3>
+            <p className="text-gray-600 mb-4">Hit 'Create Email' to get started!</p>
+            <div className="text-sm text-gray-500">
+              Your generated emails will appear here for easy access and reuse.
+            </div>
+          </div>
         </CardContent>
       </Card>
     );

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -73,8 +72,12 @@ const Index = () => {
       {currentView === "home" && (
         <div className="pb-20">
           <Hero onGetStarted={handleGetStarted} />
-          <Features />
-          <Pricing onGetStarted={handleGetStarted} />
+          <div className="pt-10 pb-14">
+            <Features />
+          </div>
+          <div className="pt-10 pb-14">
+            <Pricing onGetStarted={handleGetStarted} />
+          </div>
         </div>
       )}
 

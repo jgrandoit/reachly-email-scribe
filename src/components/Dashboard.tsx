@@ -28,7 +28,7 @@ export const Dashboard = ({ onStartGenerator }: DashboardProps) => {
   return (
     <div className="container mx-auto px-4 py-16">
       <div className="max-w-6xl mx-auto">
-        <div className="mb-8">
+        <div className="mb-10">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Welcome back, {user?.email?.split('@')[0]}!
           </h1>
@@ -37,7 +37,7 @@ export const Dashboard = ({ onStartGenerator }: DashboardProps) => {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
+        <div className="grid md:grid-cols-3 gap-6 mb-10">
           {/* Current Plan */}
           <Card>
             <CardHeader className="pb-3">
@@ -107,16 +107,22 @@ export const Dashboard = ({ onStartGenerator }: DashboardProps) => {
             </CardContent>
           </Card>
 
-          {/* Quick Action */}
-          <Card>
+          {/* Generate Cold Email Section - Updated */}
+          <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
-                <Zap className="w-5 h-5 text-purple-600" />
-                Quick Start
+                <Zap className="w-5 h-5 text-blue-600" />
+                <span className="text-blue-900">Generate Cold Email</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-600 mb-4">
+              <div className="mb-1">
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-700 bg-blue-100 px-2 py-1 rounded-full mb-3">
+                  ⚡ Quick Start
+                </span>
+              </div>
+              <h3 className="font-semibold text-blue-900 mb-2">Write Your First Email</h3>
+              <p className="text-sm text-blue-700 mb-4">
                 Generate your next cold email in seconds
               </p>
               <Button
@@ -128,7 +134,7 @@ export const Dashboard = ({ onStartGenerator }: DashboardProps) => {
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
               {!usage.canGenerate && (
-                <p className="text-xs text-gray-500 mt-2 text-center">
+                <p className="text-xs text-blue-600 mt-2 text-center">
                   Upgrade your plan to generate more emails
                 </p>
               )}
@@ -137,13 +143,13 @@ export const Dashboard = ({ onStartGenerator }: DashboardProps) => {
         </div>
 
         {/* Email History Section */}
-        <div className="mb-8">
+        <div className="mb-10">
           <EmailHistory />
         </div>
 
-        {/* Upgrade Section for Free Users */}
+        {/* Upgrade Section for Free Users - Enhanced styling */}
         {!subscribed && (
-          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+          <Card className="bg-gradient-to-br from-blue-50 via-indigo-50 to-blue-100 border-blue-200 shadow-lg shadow-blue-100/50">
             <CardHeader>
               <CardTitle className="text-xl text-blue-900">
                 Unlock Unlimited Email Generation
@@ -154,7 +160,7 @@ export const Dashboard = ({ onStartGenerator }: DashboardProps) => {
             </CardHeader>
             <CardContent>
               <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-1">
+                <div className="flex-1 bg-white/70 backdrop-blur-sm rounded-lg p-4 border border-blue-200">
                   <h4 className="font-semibold text-blue-900 mb-2">Starter Plan - $12/mo</h4>
                   <ul className="text-sm text-blue-800 space-y-1">
                     <li>• 50 emails per month</li>
@@ -162,7 +168,7 @@ export const Dashboard = ({ onStartGenerator }: DashboardProps) => {
                     <li>• All tone options</li>
                   </ul>
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 bg-white/70 backdrop-blur-sm rounded-lg p-4 border border-blue-200">
                   <h4 className="font-semibold text-blue-900 mb-2">Pro Plan - $29/mo</h4>
                   <ul className="text-sm text-blue-800 space-y-1">
                     <li>• Unlimited emails</li>
@@ -175,14 +181,14 @@ export const Dashboard = ({ onStartGenerator }: DashboardProps) => {
                 <Button
                   onClick={() => createCheckout("starter")}
                   variant="outline"
-                  className="flex-1"
+                  className="flex-1 border-blue-300 text-blue-700 hover:bg-blue-50"
                   disabled={loading}
                 >
                   Choose Starter
                 </Button>
                 <Button
                   onClick={() => createCheckout("pro")}
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg shadow-blue-200"
                   disabled={loading}
                 >
                   Choose Pro
