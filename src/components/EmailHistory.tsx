@@ -19,7 +19,11 @@ interface GeneratedEmail {
   created_at: string;
 }
 
-export const EmailHistory = () => {
+interface EmailHistoryProps {
+  onEditEmail?: (email: GeneratedEmail) => void;
+}
+
+export const EmailHistory = ({ onEditEmail }: EmailHistoryProps) => {
   const [emails, setEmails] = useState<GeneratedEmail[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -85,12 +89,17 @@ export const EmailHistory = () => {
         timestamp: Date.now()
       }));
       
-      // Navigate to generator (reload to trigger the restoration)
-      window.location.href = '/';
+      // Use the callback prop to navigate to generator if provided
+      if (onEditEmail) {
+        onEditEmail(email);
+      } else {
+        // Fallback: reload to trigger the restoration
+        window.location.reload();
+      }
       
       toast({
         title: "Loading Email for Editing",
-        description: "Redirecting to generator with your email loaded...",
+        description: "Email loaded into generator for editing...",
       });
     } catch (error) {
       console.error('Error loading email for editing:', error);

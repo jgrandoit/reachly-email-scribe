@@ -1,203 +1,169 @@
-
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Mail, Crown, Zap, ArrowRight } from "lucide-react";
+import { Sparkles, BarChart3, Crown, Mail, Calendar, Target, Zap } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useSubscription } from "@/hooks/useSubscription";
 import { useUsage } from "@/hooks/useUsage";
+import { useSubscription } from "@/hooks/useSubscription";
 import { EmailHistory } from "./EmailHistory";
+import { UsageIndicator } from "./UsageIndicator";
 
 interface DashboardProps {
   onStartGenerator: () => void;
 }
 
+interface GeneratedEmail {
+  id: string;
+  subject_line: string | null;
+  email_content: string;
+  product_service: string | null;
+  target_audience: string | null;
+  tone: string | null;
+  framework: string | null;
+  created_at: string;
+}
+
 export const Dashboard = ({ onStartGenerator }: DashboardProps) => {
   const { user } = useAuth();
-  const { subscribed, subscription_tier, createCheckout, openCustomerPortal, loading } = useSubscription();
   const { usage, loading: usageLoading } = useUsage();
+  const { subscribed, subscription_tier, createCheckout } = useSubscription();
 
   const handleUpgrade = async () => {
-    if (subscription_tier === "Starter") {
-      await createCheckout("pro");
-    } else {
-      await createCheckout("starter");
-    }
+    await createCheckout("starter");
+  };
+
+  const handleEditEmail = (email: GeneratedEmail) => {
+    // Navigate to generator when editing an email
+    onStartGenerator();
   };
 
   return (
-    <div className="container mx-auto px-4 py-16">
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-10">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome back, {user?.email?.split('@')[0]}!
+    <section className="container mx-auto px-4 py-8 md:py-16">
+      <div className="max-w-7xl mx-auto">
+        <div className="text-center mb-8 md:mb-12">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 bg-clip-text text-transparent mb-4">
+            Welcome back!
           </h1>
-          <p className="text-gray-600">
-            Your AI-powered cold email generation dashboard
+          <p className="text-lg md:text-xl text-gray-600 mb-6">
+            Hello {user?.email}! Ready to create more powerful cold emails?
           </p>
+          
+          {!usageLoading && (
+            <UsageIndicator usage={usage} onUpgrade={handleUpgrade} />
+          )}
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 mb-10">
-          {/* Current Plan */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Crown className="w-5 h-5 text-blue-600" />
-                Current Plan
+        <div className="grid lg:grid-cols-3 gap-6 lg:gap-8 mb-8">
+          {/* Quick Actions */}
+          <Card className="backdrop-blur-sm bg-white/60 border border-blue-200">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-blue-600" />
+                Quick Actions
               </CardTitle>
+              <CardDescription>
+                Generate new emails or manage your account
+              </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600 mb-1">
-                {subscription_tier || "Free"}
-              </div>
-              <p className="text-sm text-gray-600">
-                {subscribed ? "Active subscription" : "Free tier"}
-              </p>
-              {subscribed && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={openCustomerPortal}
-                  className="mt-3 w-full"
-                  disabled={loading}
+            <CardContent className="space-y-4">
+              <Button 
+                onClick={onStartGenerator}
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                disabled={!usage.canGenerate}
+              >
+                <Mail className="w-4 h-4 mr-2" />
+                {usage.canGenerate ? 'Create New Email' : 'Upgrade to Generate'}
+              </Button>
+              
+              {!subscribed && (
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={handleUpgrade}
                 >
-                  Manage Plan
+                  <Crown className="w-4 h-4 mr-2" />
+                  Upgrade Plan
                 </Button>
               )}
             </CardContent>
           </Card>
 
-          {/* Emails Generated */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Mail className="w-5 h-5 text-green-600" />
-                Emails This Month
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {usageLoading ? (
-                <div className="text-sm text-gray-500">Loading usage...</div>
-              ) : (
-                <>
-                  <div className="text-2xl font-bold text-green-600 mb-1">
-                    {usage.current}
-                    {usage.limit !== -1 && (
-                      <span className="text-sm text-gray-500 font-normal">
-                        /{usage.limit}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-600 mb-3">
-                    {usage.limit === -1 
-                      ? "Unlimited emails"
-                      : `${Math.max(0, usage.limit - usage.current)} emails remaining`
-                    }
-                  </p>
-                  {usage.limit !== -1 && (
-                    <Progress value={usage.percentage} className="h-2" />
-                  )}
-                  {!usage.canGenerate && (
-                    <p className="text-xs text-red-600 mt-2">
-                      Monthly limit reached - upgrade to continue
-                    </p>
-                  )}
-                </>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Generate Cold Email Section - Updated */}
-          <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Zap className="w-5 h-5 text-blue-600" />
-                <span className="text-blue-900">Generate Cold Email</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-1">
-                <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-700 bg-blue-100 px-2 py-1 rounded-full mb-3">
-                  ⚡ Quick Start
-                </span>
-              </div>
-              <h3 className="font-semibold text-blue-900 mb-2">Write Your First Email</h3>
-              <p className="text-sm text-blue-700 mb-4">
-                Generate your next cold email in seconds
-              </p>
-              <Button
-                onClick={onStartGenerator}
-                disabled={!usage.canGenerate}
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50"
-              >
-                Create Email
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-              {!usage.canGenerate && (
-                <p className="text-xs text-blue-600 mt-2 text-center">
-                  Upgrade your plan to generate more emails
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Email History Section */}
-        <div className="mb-10">
-          <EmailHistory />
-        </div>
-
-        {/* Upgrade Section for Free Users - Enhanced styling */}
-        {!subscribed && (
-          <Card className="bg-gradient-to-br from-blue-50 via-indigo-50 to-blue-100 border-blue-200 shadow-lg shadow-blue-100/50">
+          {/* Usage Stats */}
+          <Card className="backdrop-blur-sm bg-white/60 border border-blue-200">
             <CardHeader>
-              <CardTitle className="text-xl text-blue-900">
-                Unlock Unlimited Email Generation
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-green-600" />
+                This Month
               </CardTitle>
-              <CardDescription className="text-blue-700">
-                Upgrade to generate more emails and access premium features
+              <CardDescription>
+                Your email generation activity
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-1 bg-white/70 backdrop-blur-sm rounded-lg p-4 border border-blue-200">
-                  <h4 className="font-semibold text-blue-900 mb-2">Starter Plan - $12/mo</h4>
-                  <ul className="text-sm text-blue-800 space-y-1">
-                    <li>• 50 emails per month</li>
-                    <li>• 3 email variants per generation</li>
-                    <li>• All tone options</li>
-                  </ul>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Emails Generated</span>
+                  <span className="font-semibold">{usage.current}/{usage.limit}</span>
                 </div>
-                <div className="flex-1 bg-white/70 backdrop-blur-sm rounded-lg p-4 border border-blue-200">
-                  <h4 className="font-semibold text-blue-900 mb-2">Pro Plan - $29/mo</h4>
-                  <ul className="text-sm text-blue-800 space-y-1">
-                    <li>• Unlimited emails</li>
-                    <li>• 5 email variants per generation</li>
-                    <li>• Priority support</li>
-                  </ul>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${Math.min((usage.current / usage.limit) * 100, 100)}%` }}
+                  />
                 </div>
-              </div>
-              <div className="flex gap-3 mt-6">
-                <Button
-                  onClick={() => createCheckout("starter")}
-                  variant="outline"
-                  className="flex-1 border-blue-300 text-blue-700 hover:bg-blue-50"
-                  disabled={loading}
-                >
-                  Choose Starter
-                </Button>
-                <Button
-                  onClick={() => createCheckout("pro")}
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg shadow-blue-200"
-                  disabled={loading}
-                >
-                  Choose Pro
-                </Button>
+                <div className="text-xs text-gray-500">
+                  {usage.limit - usage.current} emails remaining
+                </div>
               </div>
             </CardContent>
           </Card>
-        )}
+
+          {/* Plan Info */}
+          <Card className="backdrop-blur-sm bg-white/60 border border-blue-200">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                {subscribed ? (
+                  <Crown className="w-5 h-5 text-yellow-500" />
+                ) : (
+                  <Target className="w-5 h-5 text-gray-500" />
+                )}
+                Current Plan
+              </CardTitle>
+              <CardDescription>
+                {subscribed ? `${subscription_tier} Plan` : 'Free Plan'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Monthly Limit</span>
+                  <span className="font-medium">{usage.limit} emails</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>AI Model</span>
+                  <span className="font-medium">
+                    {subscription_tier === 'pro' ? 'GPT-4' : 'GPT-4o-mini'}
+                  </span>
+                </div>
+                {!subscribed && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full mt-3"
+                    onClick={handleUpgrade}
+                  >
+                    <Zap className="w-3 h-3 mr-1" />
+                    Upgrade Now
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Email History */}
+        <EmailHistory onEditEmail={handleEditEmail} />
       </div>
-    </div>
+    </section>
   );
 };
