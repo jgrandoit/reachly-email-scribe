@@ -39,7 +39,7 @@ export const Features = () => {
   return (
     <section id="features" className="container mx-auto px-4 py-16">
       <div className="text-center mb-16">
-        <h2 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-4">
+        <h2 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-4 leading-tight py-2">
           Everything You Need to Close More Deals
         </h2>
         <p className="text-xl text-gray-600 max-w-2xl mx-auto">
