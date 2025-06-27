@@ -44,9 +44,11 @@ serve(async (req) => {
   try {
     logStep("Function started");
     
-    const { product, audience, tone } = await req.json();
+    const requestBody = await req.json();
+    const { prompt, product, audience, tone } = requestBody;
 
-    if (!product || !audience || !tone) {
+    // Support both new prompt-based system and legacy system
+    if (!prompt && (!product || !audience || !tone)) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -122,34 +124,27 @@ serve(async (req) => {
       });
     }
 
-    // Enhanced prompt construction based on tier
-    const systemPrompt = `You are an expert cold email copywriter. Your task is to write compelling, personalized cold emails that get responses. Focus on:
-    1. Creating attention-grabbing subject lines
-    2. Opening with relevance to the recipient
-    3. Clearly stating the value proposition
-    4. Including a specific, low-friction call to action
-    5. Keeping it concise (under 150 words)
-    
-    Format your response with:
-    - Subject line
-    - Email body
-    - Clear call to action`;
+    // Use the provided prompt or generate a legacy one
+    let finalPrompt = prompt;
+    if (!prompt) {
+      // Legacy system fallback
+      const variantCount = userTier === 'free' ? 2 : userTier === 'starter' ? 3 : 5;
+      finalPrompt = `You are an expert cold email copywriter. Your task is to write compelling, personalized cold emails that get responses.
 
-    const variantCount = userTier === 'free' ? 2 : userTier === 'starter' ? 3 : 5;
-    
-    const userPrompt = `Write ${variantCount} short cold email variants in a ${tone} tone promoting this product/service: "${product}" 
-    
-    Target audience: "${audience}"
-    
-    Requirements:
-    - Include compelling subject lines for each email
-    - Personalize the opening line
-    - Focus on benefits, not features
-    - Include a clear call to action
-    - Make each email distinct in approach
-    - Keep each email under 150 words`;
+Write ${variantCount} short cold email variants in a ${tone} tone promoting this product/service: "${product}" 
 
-    logStep('Generating email with OpenAI', { variants: variantCount });
+Target audience: "${audience}"
+
+Requirements:
+- Include compelling subject lines for each email
+- Personalize the opening line
+- Focus on benefits, not features
+- Include a clear call to action
+- Make each email distinct in approach
+- Keep each email under 150 words`;
+    }
+
+    logStep('Generating email with OpenAI', { promptLength: finalPrompt.length });
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -161,16 +156,12 @@ serve(async (req) => {
         model: 'gpt-4o-mini',
         messages: [
           {
-            role: 'system',
-            content: systemPrompt
-          },
-          {
             role: 'user',
-            content: userPrompt
+            content: finalPrompt
           }
         ],
         temperature: 0.7,
-        max_tokens: 800 + (variantCount * 100) // More tokens for more variants
+        max_tokens: 1200
       })
     });
 
@@ -197,10 +188,7 @@ serve(async (req) => {
     
     // Log successful generation for debugging
     logStep('Email generated successfully', { 
-      product: product.substring(0, 50), 
-      audience, 
-      tone, 
-      variants: variantCount,
+      promptType: prompt ? 'framework-based' : 'legacy',
       usage: usageCount + 1
     });
     

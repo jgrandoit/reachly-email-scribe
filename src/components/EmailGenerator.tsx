@@ -12,10 +12,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUsage } from "@/hooks/useUsage";
 import { useSubscription } from "@/hooks/useSubscription";
 import { ProtectedRoute } from "./ProtectedRoute";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
+import { FrameworkSelector, FrameworkSettings } from "./FrameworkSelector";
+import { generatePrompt } from "@/utils/promptGenerator";
 
 const industryPrompts = [
   { value: "saas", label: "SaaS & Tech", prompt: "SaaS platform for project management that helps teams collaborate more efficiently" },
@@ -27,34 +29,15 @@ const industryPrompts = [
   { value: "custom", label: "Custom", prompt: "" }
 ];
 
-const toneOptions = [
-  { 
-    value: "professional", 
-    label: "Professional",
-    tooltip: "Formal, business-focused tone. Best for B2B and enterprise clients."
-  },
-  { 
-    value: "friendly", 
-    label: "Friendly",
-    tooltip: "Warm and approachable tone. Great for building rapport and trust."
-  },
-  { 
-    value: "casual", 
-    label: "Casual",
-    tooltip: "Relaxed, conversational tone. Works well for creative industries."
-  },
-  { 
-    value: "direct", 
-    label: "Direct",
-    tooltip: "Straight to the point. Perfect when time is limited."
-  }
-];
-
 export const EmailGenerator = () => {
   const [productService, setProductService] = useState("");
   const [targetAudience, setTargetAudience] = useState("");
-  const [tone, setTone] = useState("professional");
   const [selectedIndustry, setSelectedIndustry] = useState("");
+  const [frameworkSettings, setFrameworkSettings] = useState<FrameworkSettings>({
+    framework: "aida",
+    tone: "professional",
+    customHook: ""
+  });
   const [generatedEmail, setGeneratedEmail] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
@@ -84,10 +67,10 @@ export const EmailGenerator = () => {
       return;
     }
 
-    if (!productService || !targetAudience || !tone) {
+    if (!productService || !targetAudience || !frameworkSettings.framework || !frameworkSettings.tone) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all fields to generate your email.",
+        description: "Please fill in all required fields to generate your email.",
         variant: "destructive",
       });
       return;
@@ -99,11 +82,19 @@ export const EmailGenerator = () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
+      // Generate dynamic prompt based on user selections
+      const dynamicPrompt = generatePrompt({
+        framework: frameworkSettings.framework,
+        tone: frameworkSettings.tone,
+        customHook: frameworkSettings.customHook,
+        product: productService,
+        audience: targetAudience,
+        tier: usage.tier
+      });
+
       const res = await supabase.functions.invoke('generate-email', {
         body: {
-          product: productService,
-          audience: targetAudience,
-          tone,
+          prompt: dynamicPrompt,
         },
         headers: {
           Authorization: `Bearer ${session?.access_token}`,
@@ -156,16 +147,20 @@ export const EmailGenerator = () => {
   const resetForm = () => {
     setProductService("");
     setTargetAudience("");
-    setTone("professional");
     setSelectedIndustry("");
+    setFrameworkSettings({
+      framework: "aida",
+      tone: "professional",
+      customHook: ""
+    });
     setGeneratedEmail("");
   };
 
   const regenerateEmail = () => {
-    if (!productService || !targetAudience || !tone) {
+    if (!productService || !targetAudience || !frameworkSettings.framework || !frameworkSettings.tone) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all fields to regenerate your email.",
+        description: "Please fill in all required fields to regenerate your email.",
         variant: "destructive",
       });
       return;
@@ -187,7 +182,7 @@ export const EmailGenerator = () => {
                 AI Email Generator
               </h1>
               <p className="text-xl text-gray-600 mb-2">
-                Welcome back, {user?.email}! Generate personalized cold emails in seconds.
+                Welcome back, {user?.email}! Generate personalized cold emails using proven frameworks.
               </p>
               
               {/* Usage Display */}
@@ -235,10 +230,16 @@ export const EmailGenerator = () => {
                     )}
                   </CardTitle>
                   <CardDescription>
-                    Provide details about your product/service and target audience
+                    Configure your email framework and provide details about your outreach
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
+                  {/* Framework Settings */}
+                  <FrameworkSelector 
+                    settings={frameworkSettings} 
+                    onSettingsChange={setFrameworkSettings} 
+                  />
+
                   <div className="space-y-2">
                     <Label htmlFor="industry">Industry Template (Optional)</Label>
                     <Select value={selectedIndustry} onValueChange={handleIndustryChange}>
@@ -274,39 +275,6 @@ export const EmailGenerator = () => {
                       value={targetAudience}
                       onChange={(e) => setTargetAudience(e.target.value)}
                     />
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Label htmlFor="tone">Email tone</Label>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <HelpCircle className="w-4 h-4 text-gray-400" />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Choose the tone that best fits your audience and industry</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </div>
-                    <Select value={tone} onValueChange={setTone}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choose your email tone" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {toneOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            <Tooltip>
-                              <TooltipTrigger className="w-full text-left">
-                                {option.label}
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>{option.tooltip}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
                   </div>
 
                   <div className="flex gap-3">
@@ -373,7 +341,7 @@ export const EmailGenerator = () => {
                     <div className="bg-gray-50/80 p-8 rounded-lg border min-h-[400px] flex items-center justify-center">
                       <div className="text-center">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
-                        <p className="text-gray-600">Generating your personalized email...</p>
+                        <p className="text-gray-600">Generating your personalized email using {frameworkSettings.framework.toUpperCase()} framework...</p>
                       </div>
                     </div>
                   ) : generatedEmail ? (
@@ -400,7 +368,7 @@ export const EmailGenerator = () => {
                     <div className="bg-gray-50/80 p-8 rounded-lg border min-h-[400px] flex items-center justify-center">
                       <div className="text-center text-gray-500">
                         <Sparkles className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                        <p>Fill out the form and click "Generate Email" to see your personalized cold email here.</p>
+                        <p>Configure your framework settings and fill out the form to generate your personalized cold email.</p>
                       </div>
                     </div>
                   )}
