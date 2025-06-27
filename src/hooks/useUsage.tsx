@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useTestMode } from "@/hooks/useTestMode";
 import { supabase } from "@/integrations/supabase/client";
 
 interface UsageData {
@@ -23,6 +24,7 @@ export const useUsage = () => {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const { subscribed, subscription_tier } = useSubscription();
+  const { isTestMode, testTier } = useTestMode();
 
   const getUsageLimits = (tier: string) => {
     switch (tier.toLowerCase()) {
@@ -49,29 +51,61 @@ export const useUsage = () => {
     }
 
     try {
-      const { data, error } = await supabase.rpc('get_user_monthly_usage', {
-        p_user_id: user.id
-      });
-
-      if (error) {
-        console.error('Error fetching usage:', error);
-        return;
+      // Determine the effective tier (test mode overrides real subscription)
+      let effectiveTier: string;
+      if (isTestMode && testTier) {
+        effectiveTier = testTier;
+        console.log(`[TEST MODE] Using test tier for usage: ${testTier}`);
+      } else {
+        effectiveTier = subscribed ? (subscription_tier?.toLowerCase() || 'starter') : 'free';
       }
 
-      const currentUsage = data || 0;
-      const userTier = subscribed ? (subscription_tier?.toLowerCase() || 'starter') : 'free';
-      const limit = getUsageLimits(userTier);
+      // Get actual usage from database (unless in test mode with artificial data)
+      let currentUsage = 0;
+      if (!isTestMode) {
+        const { data, error } = await supabase.rpc('get_user_monthly_usage', {
+          p_user_id: user.id
+        });
+
+        if (error) {
+          console.error('Error fetching usage:', error);
+          return;
+        }
+        currentUsage = data || 0;
+      } else {
+        // In test mode, simulate some usage based on tier
+        switch (testTier) {
+          case 'free':
+            currentUsage = 3; // Show some usage but not at limit
+            break;
+          case 'starter':
+            currentUsage = 15; // Show moderate usage
+            break;
+          case 'pro':
+            currentUsage = 100; // Show high usage but unlimited
+            break;
+        }
+      }
+
+      const limit = getUsageLimits(effectiveTier);
       const percentage = limit === -1 ? 0 : (currentUsage / limit) * 100;
       
       // Strict enforcement: free users cannot generate if they've reached 10
       const canGenerate = limit === -1 || currentUsage < limit;
 
-      console.log('Usage check:', { currentUsage, limit, userTier, canGenerate });
+      console.log('Usage check:', { 
+        currentUsage, 
+        limit, 
+        userTier: effectiveTier, 
+        canGenerate,
+        isTestMode,
+        testTier 
+      });
 
       setUsage({
         current: currentUsage,
         limit,
-        tier: userTier,
+        tier: effectiveTier,
         percentage,
         canGenerate
       });
@@ -89,7 +123,7 @@ export const useUsage = () => {
 
   useEffect(() => {
     getCurrentUsage();
-  }, [user, subscribed, subscription_tier]);
+  }, [user, subscribed, subscription_tier, isTestMode, testTier]);
 
   return {
     usage,

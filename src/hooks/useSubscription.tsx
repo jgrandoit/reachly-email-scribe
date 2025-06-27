@@ -3,6 +3,7 @@ import { useState, useEffect, createContext, useContext } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useTestMode } from "@/hooks/useTestMode";
 
 interface SubscriptionData {
   subscribed: boolean;
@@ -22,6 +23,7 @@ const SubscriptionContext = createContext<SubscriptionContextType | undefined>(u
 export const SubscriptionProvider = ({ children }: { children: React.ReactNode }) => {
   const { user, session } = useAuth();
   const { toast } = useToast();
+  const { isTestMode, testTier } = useTestMode();
   const [loading, setLoading] = useState(false);
   const [subscriptionData, setSubscriptionData] = useState<SubscriptionData>({
     subscribed: false,
@@ -30,6 +32,18 @@ export const SubscriptionProvider = ({ children }: { children: React.ReactNode }
   });
 
   const checkSubscription = async () => {
+    // If in test mode, override with test data
+    if (isTestMode && testTier) {
+      console.log(`[TEST MODE] Overriding subscription with tier: ${testTier}`);
+      const testSubscriptionData = {
+        subscribed: testTier !== 'free',
+        subscription_tier: testTier === 'free' ? null : testTier,
+        subscription_end: testTier === 'free' ? null : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+      };
+      setSubscriptionData(testSubscriptionData);
+      return;
+    }
+
     if (!user || !session) {
       console.log('No user or session, skipping subscription check');
       return;
@@ -71,6 +85,15 @@ export const SubscriptionProvider = ({ children }: { children: React.ReactNode }
   };
 
   const createCheckout = async (plan: string) => {
+    if (isTestMode) {
+      toast({
+        title: "Test Mode Active",
+        description: `Cannot create checkout in test mode. Currently simulating ${testTier} tier.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!user || !session) {
       toast({
         title: "Authentication Required",
@@ -106,6 +129,15 @@ export const SubscriptionProvider = ({ children }: { children: React.ReactNode }
   };
 
   const openCustomerPortal = async () => {
+    if (isTestMode) {
+      toast({
+        title: "Test Mode Active",
+        description: `Cannot open customer portal in test mode. Currently simulating ${testTier} tier.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!user || !session) {
       toast({
         title: "Authentication Required",
@@ -139,9 +171,12 @@ export const SubscriptionProvider = ({ children }: { children: React.ReactNode }
     }
   };
 
-  // Check subscription when user or session changes
+  // Check subscription when user, session, or test mode changes
   useEffect(() => {
-    if (user && session) {
+    if (isTestMode) {
+      // Immediately update with test data
+      checkSubscription();
+    } else if (user && session) {
       console.log('User and session available, checking subscription');
       checkSubscription();
     } else {
@@ -152,7 +187,7 @@ export const SubscriptionProvider = ({ children }: { children: React.ReactNode }
         subscription_end: null,
       });
     }
-  }, [user, session]);
+  }, [user, session, isTestMode, testTier]);
 
   // Additional effect to log subscription data changes
   useEffect(() => {
