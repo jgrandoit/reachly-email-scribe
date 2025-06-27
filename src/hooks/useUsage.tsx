@@ -31,12 +31,19 @@ export const useUsage = () => {
       case 'pro':
         return -1; // unlimited
       default:
-        return 10; // free
+        return 10; // free tier - strictly enforce 10 limit
     }
   };
 
   const getCurrentUsage = async () => {
     if (!user) {
+      setUsage({
+        current: 0,
+        limit: 10,
+        tier: 'free',
+        percentage: 0,
+        canGenerate: false // Not logged in users cannot generate
+      });
       setLoading(false);
       return;
     }
@@ -55,7 +62,11 @@ export const useUsage = () => {
       const userTier = subscribed ? (subscription_tier?.toLowerCase() || 'starter') : 'free';
       const limit = getUsageLimits(userTier);
       const percentage = limit === -1 ? 0 : (currentUsage / limit) * 100;
+      
+      // Strict enforcement: free users cannot generate if they've reached 10
       const canGenerate = limit === -1 || currentUsage < limit;
+
+      console.log('Usage check:', { currentUsage, limit, userTier, canGenerate });
 
       setUsage({
         current: currentUsage,

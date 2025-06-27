@@ -20,6 +20,7 @@ interface UsageIndicatorProps {
 export const UsageIndicator = ({ usage, onUpgrade }: UsageIndicatorProps) => {
   const getProgressColor = () => {
     if (usage.limit === -1) return "bg-green-500"; // Unlimited
+    if (usage.percentage >= 100) return "bg-red-500"; // At limit
     if (usage.percentage > 80) return "bg-red-500";
     if (usage.percentage > 60) return "bg-yellow-500";
     return "bg-blue-500";
@@ -36,6 +37,17 @@ export const UsageIndicator = ({ usage, onUpgrade }: UsageIndicatorProps) => {
     }
   };
 
+  const getTierDisplayName = () => {
+    switch (usage.tier) {
+      case 'pro':
+        return 'Pro';
+      case 'starter':
+        return 'Starter';
+      default:
+        return 'Free';
+    }
+  };
+
   return (
     <div className="mt-6 max-w-md mx-auto">
       <div className="bg-white/80 backdrop-blur-sm border border-blue-200 rounded-lg p-4">
@@ -43,7 +55,7 @@ export const UsageIndicator = ({ usage, onUpgrade }: UsageIndicatorProps) => {
           <div className="flex items-center gap-2">
             {getTierIcon()}
             <span className="text-sm font-medium text-gray-700">
-              Monthly Usage ({usage.tier})
+              Monthly Usage ({getTierDisplayName()})
             </span>
           </div>
           <span className="text-sm font-bold text-gray-900">
@@ -54,12 +66,12 @@ export const UsageIndicator = ({ usage, onUpgrade }: UsageIndicatorProps) => {
         {usage.limit !== -1 ? (
           <div className="space-y-2">
             <Progress 
-              value={usage.percentage} 
+              value={Math.min(usage.percentage, 100)} 
               className="h-3"
             />
             <div className="flex justify-between text-xs text-gray-500">
               <span>0</span>
-              <span className={`font-medium ${usage.percentage > 80 ? 'text-red-600' : 'text-gray-600'}`}>
+              <span className={`font-medium ${usage.percentage >= 100 ? 'text-red-600' : usage.percentage > 80 ? 'text-red-600' : 'text-gray-600'}`}>
                 {Math.round(usage.percentage)}% used
               </span>
               <span>{usage.limit}</span>
@@ -74,18 +86,51 @@ export const UsageIndicator = ({ usage, onUpgrade }: UsageIndicatorProps) => {
           </div>
         )}
 
-        {usage.percentage > 80 && usage.limit !== -1 && (
+        {/* Free tier specific messaging */}
+        {usage.tier === 'free' && usage.percentage >= 100 && (
           <Alert className="mt-3">
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription className="text-sm">
-              You're running low on emails. 
+              <strong>Free limit reached!</strong> You've used all 10 free emails this month.
               <Button 
                 variant="link" 
-                className="p-0 ml-1 h-auto text-blue-600 text-sm"
+                className="p-0 ml-1 h-auto text-blue-600 text-sm font-medium"
                 onClick={onUpgrade}
               >
-                Upgrade now
+                Upgrade to Starter for 50 emails ($12/month)
               </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* General warning for approaching limit */}
+        {usage.percentage > 80 && usage.percentage < 100 && usage.limit !== -1 && (
+          <Alert className="mt-3">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription className="text-sm">
+              {usage.tier === 'free' ? (
+                <>
+                  You're running low on free emails. 
+                  <Button 
+                    variant="link" 
+                    className="p-0 ml-1 h-auto text-blue-600 text-sm"
+                    onClick={onUpgrade}
+                  >
+                    Upgrade now
+                  </Button>
+                </>
+              ) : (
+                <>
+                  You're running low on emails. 
+                  <Button 
+                    variant="link" 
+                    className="p-0 ml-1 h-auto text-blue-600 text-sm"
+                    onClick={onUpgrade}
+                  >
+                    Upgrade now
+                  </Button>
+                </>
+              )}
             </AlertDescription>
           </Alert>
         )}

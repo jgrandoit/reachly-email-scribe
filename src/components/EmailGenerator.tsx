@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -63,10 +64,15 @@ export const EmailGenerator = () => {
   };
 
   const handleGenerate = async () => {
+    // Strict frontend validation for free tier
     if (!usage.canGenerate) {
+      const limitMessage = usage.tier === 'free' 
+        ? `You've reached your free plan limit of ${usage.limit} emails this month. Upgrade to continue generating emails!`
+        : `You've reached your monthly limit of ${usage.limit} emails. Upgrade to generate more!`;
+      
       toast({
         title: "Usage Limit Reached",
-        description: `You've reached your monthly limit of ${usage.limit} emails. Upgrade to generate more!`,
+        description: limitMessage,
         variant: "destructive",
       });
       return;
@@ -113,9 +119,13 @@ export const EmailGenerator = () => {
       if (resA.error || resB.error) {
         const error = resA.error || resB.error;
         if (error.code === 'USAGE_LIMIT_EXCEEDED') {
+          const limitMessage = usage.tier === 'free' 
+            ? `You've reached your free plan limit of ${usage.limit} emails this month. Upgrade to continue!`
+            : `You've used all ${usage.limit} emails for this month. Upgrade to generate more!`;
+          
           toast({
             title: "Usage Limit Exceeded",
-            description: `You've used all ${usage.limit} emails for this month. Upgrade to generate more!`,
+            description: limitMessage,
             variant: "destructive",
           });
           return;
@@ -206,6 +216,11 @@ export const EmailGenerator = () => {
                     </CardTitle>
                     <CardDescription>
                       Configure your outreach details to generate two unique email variations
+                      {usage.tier === 'free' && (
+                        <span className="block mt-2 text-sm text-orange-600">
+                          Free plan: {usage.current}/{usage.limit} emails used this month
+                        </span>
+                      )}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
@@ -292,7 +307,7 @@ export const EmailGenerator = () => {
                         ) : !usage.canGenerate ? (
                           <>
                             <AlertTriangle className="w-4 h-4 mr-2" />
-                            Limit Reached
+                            {usage.tier === 'free' ? 'Free Limit Reached' : 'Limit Reached'}
                           </>
                         ) : (
                           <>
@@ -311,14 +326,29 @@ export const EmailGenerator = () => {
                       <Alert>
                         <Crown className="h-4 w-4" />
                         <AlertDescription>
-                          You've reached your monthly limit. 
-                          <Button 
-                            variant="link" 
-                            className="p-0 ml-1 h-auto"
-                            onClick={handleUpgrade}
-                          >
-                            Upgrade to generate more emails
-                          </Button>
+                          {usage.tier === 'free' ? (
+                            <>
+                              You've used all 10 free emails this month.{' '}
+                              <Button 
+                                variant="link" 
+                                className="p-0 ml-1 h-auto text-blue-600"
+                                onClick={handleUpgrade}
+                              >
+                                Upgrade to Starter ($12/month) for 50 emails
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              You've reached your monthly limit.{' '}
+                              <Button 
+                                variant="link" 
+                                className="p-0 ml-1 h-auto"
+                                onClick={handleUpgrade}
+                              >
+                                Upgrade to generate more emails
+                              </Button>
+                            </>
+                          )}
                         </AlertDescription>
                       </Alert>
                     )}
