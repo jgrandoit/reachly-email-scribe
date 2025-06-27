@@ -11,6 +11,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 // Comprehensive auth state cleanup utility
 const cleanupAuthState = () => {
+  console.log('Cleaning up auth state...');
   // Remove standard auth tokens
   localStorage.removeItem('supabase.auth.token');
   
@@ -44,11 +45,11 @@ const Auth = () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
+          console.log('User already authenticated, redirecting...');
           navigate("/");
         }
       } catch (error) {
         console.error('Error checking session:', error);
-        // Clean up on error
         cleanupAuthState();
       }
     };
@@ -67,49 +68,154 @@ const Auth = () => {
     }
 
     setLoading(true);
+    console.log('Starting authentication process...');
 
     try {
       if (isLogin) {
         // Clean up existing state before login
         cleanupAuthState();
         
-        // Attempt global sign out first
+        // Force sign out any existing sessions
         try {
           await supabase.auth.signOut({ scope: 'global' });
+          console.log('Global signout completed');
         } catch (err) {
           console.log('Global signout error (expected):', err);
-          // Continue even if this fails
         }
+
+        // Wait a moment for cleanup to complete
+        await new Promise(resolve => setTimeout(resolve, 500));
 
         console.log('Attempting to sign in with:', email);
         
         const { data, error } = await supabase.auth.signInWithPassword({
-          email: email.trim(),
+          email: email.trim().toLowerCase(),
           password,
         });
 
+        console.log('Sign in response:', { data: !!data.user, error });
+
         if (error) {
-          console.error('Auth error:', error);
+          console.error('Auth error details:', error);
           
-          // Provide more specific error messages
-          if (error.message.includes('Invalid login credentials')) {
-            toast({
-              title: "Login Failed",
-              description: "Invalid email or password. Please check your credentials and try again.",
-              variant: "destructive",
+          // Check if this is a test account that might need to be created
+          if (error.message.includes('Invalid login credentials') && 
+              (email.includes('testfree@gmail.com') || 
+               email.includes('teststarter@gmail.com') || 
+               email.includes('testpro@gmail.com'))) {
+            
+            console.log('Test account not found, attempting to create...');
+            
+            // Try to create the test account
+            const signUpEmail = email.trim().toLowerCase();
+            const tier = signUpEmail.includes('testfree') ? 'free' : 
+                        signUpEmail.includes('teststarter') ? 'starter' : 'pro';
+            
+            const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+              email: signUpEmail,
+              password,
+              options: {
+                emailRedirectTo: `${window.location.origin}/`,
+                data: {
+                  full_name: tier === 'free' ? 'Test Free' : 
+                           tier === 'starter' ? 'Test Starter' : 'Test Pro',
+                },
+              },
             });
-          } else if (error.message.includes('Email not confirmed')) {
-            toast({
-              title: "Email Not Confirmed",
-              description: "Please check your email and confirm your account before signing in.",
-              variant: "destructive",
-            });
+
+            if (signUpError) {
+              console.error('Signup error:', signUpError);
+              if (signUpError.message.includes('User already registered')) {
+                toast({
+                  title: "Authentication Issue",
+                  description: "Test account exists but password may be incorrect. Please try 'testpassword123' or contact support.",
+                  variant: "destructive",
+                });
+              } else {
+                toast({
+                  title: "Error",
+                  description: signUpError.message,
+                  variant: "destructive",
+                });
+              }
+              return;
+            }
+
+            if (signUpData.user) {
+              console.log('Test account created, setting up test data...');
+              
+              // Set up the test user data
+              try {
+                const { error: setupError } = await supabase.rpc('setup_test_user', {
+                  p_email: signUpEmail,
+                  p_tier: tier
+                });
+                
+                if (setupError) {
+                  console.error('Setup error:', setupError);
+                }
+              } catch (setupErr) {
+                console.error('Setup function error:', setupErr);
+              }
+
+              toast({
+                title: "Test Account Created",
+                description: "Test account has been created and configured. You can now sign in.",
+              });
+              
+              // Now try to sign in again
+              setTimeout(async () => {
+                try {
+                  const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
+                    email: signUpEmail,
+                    password,
+                  });
+                  
+                  if (retryError) {
+                    console.error('Retry signin error:', retryError);
+                    toast({
+                      title: "Sign In Failed",
+                      description: "Account created but sign in failed. Please try again.",
+                      variant: "destructive",
+                    });
+                  } else if (retryData.user) {
+                    console.log('Retry signin successful');
+                    toast({
+                      title: "Success",
+                      description: "Welcome to Reachly!",
+                    });
+                    setTimeout(() => {
+                      window.location.href = "/";
+                    }, 500);
+                  }
+                } catch (retryErr) {
+                  console.error('Retry signin unexpected error:', retryErr);
+                }
+                setLoading(false);
+              }, 1000);
+              return;
+            }
           } else {
-            toast({
-              title: "Error",
-              description: error.message || "An error occurred during authentication.",
-              variant: "destructive",
-            });
+            // Regular auth error handling
+            if (error.message.includes('Invalid login credentials')) {
+              toast({
+                title: "Login Failed",
+                description: "Invalid email or password. Please check your credentials and try again.",
+                variant: "destructive",
+              });
+            } else if (error.message.includes('Email not confirmed')) {
+              toast({
+                title: "Email Not Confirmed",
+                description: "Please check your email and confirm your account before signing in.",
+                variant: "destructive",
+              });
+            } else {
+              toast({
+                title: "Error",
+                description: error.message || "An error occurred during authentication.",
+                variant: "destructive",
+              });
+            }
           }
           return;
         }
@@ -127,6 +233,7 @@ const Auth = () => {
           }, 500);
         }
       } else {
+        // Sign up flow
         if (!fullName) {
           toast({
             title: "Error",
@@ -143,7 +250,7 @@ const Auth = () => {
         const redirectUrl = `${window.location.origin}/`;
         
         const { data, error } = await supabase.auth.signUp({
-          email: email.trim(),
+          email: email.trim().toLowerCase(),
           password,
           options: {
             emailRedirectTo: redirectUrl,
@@ -231,7 +338,7 @@ const Auth = () => {
           <CardContent>
             {isLogin && (
               <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-800 mb-2 font-medium">Test Accounts:</p>
+                <p className="text-sm text-blue-800 mb-2 font-medium">Test Accounts (will be auto-created):</p>
                 <div className="space-y-1">
                   <button
                     type="button"
