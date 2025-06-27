@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Sparkles, AlertTriangle, Crown } from "lucide-react";
+import { ArrowLeft, Sparkles, AlertTriangle, Crown, Mail, Bot, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useUsage } from "@/hooks/useUsage";
@@ -18,6 +17,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { generateDualPrompts } from "@/utils/promptGenerator";
 import { DualEmailPreview } from "./DualEmailPreview";
+import { UsageIndicator } from "./UsageIndicator";
+import { EmptyState } from "./EmptyState";
 
 const industryPrompts = [
   { value: "saas", label: "SaaS & Tech", prompt: "SaaS platform for project management that helps teams collaborate more efficiently" },
@@ -171,59 +172,32 @@ export const EmailGenerator = () => {
   return (
     <TooltipProvider>
       <ProtectedRoute>
-        <section className="container mx-auto px-4 py-16">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-12">
+        <section className="container mx-auto px-4 py-8 md:py-16">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-8 md:mb-12">
               <Button variant="ghost" onClick={() => window.location.reload()} className="mb-6">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Home
               </Button>
-              <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 bg-clip-text text-transparent mb-4">
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 bg-clip-text text-transparent mb-4">
                 AI Email Generator
               </h1>
-              <p className="text-xl text-gray-600 mb-2">
+              <p className="text-lg md:text-xl text-gray-600 mb-2">
                 Welcome back, {user?.email}! Generate two unique cold email variations with different approaches.
               </p>
               
-              {/* Usage Display */}
+              {/* Usage Indicator */}
               {!usageLoading && (
-                <div className="mt-6 max-w-md mx-auto">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-gray-600">
-                      Monthly Usage ({usage.tier})
-                    </span>
-                    <span className="text-sm font-medium">
-                      {usage.current} / {usage.limit === -1 ? '∞' : usage.limit}
-                    </span>
-                  </div>
-                  {usage.limit !== -1 && (
-                    <Progress value={usage.percentage} className="h-2 mb-2" />
-                  )}
-                  {usage.percentage > 80 && usage.limit !== -1 && (
-                    <Alert className="mt-4">
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertDescription>
-                        You're running low on emails. 
-                        <Button 
-                          variant="link" 
-                          className="p-0 ml-1 h-auto text-blue-600"
-                          onClick={handleUpgrade}
-                        >
-                          Upgrade now
-                        </Button>
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                </div>
+                <UsageIndicator usage={usage} onUpgrade={handleUpgrade} />
               )}
             </div>
 
-            <div className="grid lg:grid-cols-5 gap-8">
+            <div className="grid lg:grid-cols-5 gap-6 lg:gap-8">
               {/* Input Form */}
-              <div className="lg:col-span-2">
+              <div className="lg:col-span-2 order-2 lg:order-1">
                 <Card className="backdrop-blur-sm bg-white/60 border border-blue-200">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
                       <Sparkles className="w-5 h-5 text-blue-600" />
                       Email Details
                       {usage.tier !== 'free' && (
@@ -235,6 +209,7 @@ export const EmailGenerator = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
+                    {/* Industry Template */}
                     <div className="space-y-2">
                       <Label htmlFor="industry">Industry Template (Optional)</Label>
                       <Select value={selectedIndustry} onValueChange={handleIndustryChange}>
@@ -251,6 +226,7 @@ export const EmailGenerator = () => {
                       </Select>
                     </div>
 
+                    {/* Product/Service */}
                     <div className="space-y-2">
                       <Label htmlFor="product">What are you selling?</Label>
                       <Textarea
@@ -258,10 +234,11 @@ export const EmailGenerator = () => {
                         placeholder="e.g., SaaS platform for project management, digital marketing services, consulting..."
                         value={productService}
                         onChange={(e) => setProductService(e.target.value)}
-                        className="min-h-[100px]"
+                        className="min-h-[100px] resize-none"
                       />
                     </div>
 
+                    {/* Target Audience */}
                     <div className="space-y-2">
                       <Label htmlFor="audience">Who are you targeting?</Label>
                       <Input
@@ -272,6 +249,7 @@ export const EmailGenerator = () => {
                       />
                     </div>
 
+                    {/* Email Tone */}
                     <div className="space-y-2">
                       <Label htmlFor="tone">Email Tone</Label>
                       <Select value={selectedTone} onValueChange={setSelectedTone}>
@@ -288,6 +266,7 @@ export const EmailGenerator = () => {
                       </Select>
                     </div>
 
+                    {/* Personal Hook */}
                     <div className="space-y-2">
                       <Label htmlFor="customHook">Personal Hook (Optional)</Label>
                       <Input
@@ -298,11 +277,12 @@ export const EmailGenerator = () => {
                       />
                     </div>
 
-                    <div className="flex gap-3">
+                    {/* Action Buttons */}
+                    <div className="flex flex-col sm:flex-row gap-3">
                       <Button
                         onClick={handleGenerate}
                         disabled={isGenerating || !usage.canGenerate}
-                        className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                        className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 min-h-[44px]"
                       >
                         {isGenerating ? (
                           <>
@@ -321,11 +301,12 @@ export const EmailGenerator = () => {
                           </>
                         )}
                       </Button>
-                      <Button variant="outline" onClick={resetForm}>
+                      <Button variant="outline" onClick={resetForm} className="sm:w-auto w-full">
                         Reset
                       </Button>
                     </div>
 
+                    {/* Usage Limit Alert */}
                     {!usage.canGenerate && (
                       <Alert>
                         <Crown className="h-4 w-4" />
@@ -345,8 +326,8 @@ export const EmailGenerator = () => {
                 </Card>
               </div>
 
-              {/* Dual Email Preview */}
-              <div className="lg:col-span-3">
+              {/* Email Preview Area */}
+              <div className="lg:col-span-3 order-1 lg:order-2">
                 {isGenerating ? (
                   <Card className="backdrop-blur-sm bg-white/60 border border-blue-200">
                     <CardHeader>
@@ -356,13 +337,13 @@ export const EmailGenerator = () => {
                       <div className="bg-gray-50/80 p-8 rounded-lg border min-h-[400px] flex items-center justify-center">
                         <div className="text-center">
                           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
-                          <p className="text-gray-600">Generating two unique email variations...</p>
+                          <p className="text-gray-600 font-medium">Generating two unique email variations...</p>
                           <p className="text-sm text-gray-500 mt-2">This may take a moment</p>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
-                ) : (
+                ) : emailA || emailB ? (
                   <DualEmailPreview
                     emailA={emailA}
                     emailB={emailB}
@@ -373,6 +354,8 @@ export const EmailGenerator = () => {
                     onRegenerate={regenerateEmails}
                     canRegenerate={usage.canGenerate}
                   />
+                ) : (
+                  <EmptyState />
                 )}
               </div>
             </div>

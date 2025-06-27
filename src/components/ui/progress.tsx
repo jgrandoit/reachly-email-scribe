@@ -17,7 +17,7 @@ const Progress = React.forwardRef<
     {...props}
   >
     <ProgressPrimitive.Indicator
-      className="h-full w-full flex-1 bg-primary transition-all"
+      className="h-full w-full flex-1 bg-primary transition-all duration-500 ease-out"
       style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
     />
   </ProgressPrimitive.Root>
@@ -25,3 +25,16 @@ const Progress = React.forwardRef<
 Progress.displayName = ProgressPrimitive.Root.displayName
 
 export { Progress }
+
+// Add floating animation styles
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+`;
+document.head.appendChild(style);
