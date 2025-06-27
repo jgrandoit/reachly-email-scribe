@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -35,6 +36,47 @@ const tones = [
   { value: "friendly", label: "Friendly" },
   { value: "bold", label: "Bold" }
 ];
+
+// Local storage key for form persistence
+const FORM_STORAGE_KEY = 'email-generator-form-data';
+
+// Form data interface for type safety
+interface FormData {
+  productService: string;
+  targetAudience: string;
+  selectedIndustry: string;
+  selectedTone: string;
+  customHook: string;
+}
+
+// Helper function to save form data to localStorage
+const saveFormData = (data: FormData) => {
+  try {
+    localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(data));
+  } catch (error) {
+    console.error('Failed to save form data:', error);
+  }
+};
+
+// Helper function to load form data from localStorage
+const loadFormData = (): FormData | null => {
+  try {
+    const stored = localStorage.getItem(FORM_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : null;
+  } catch (error) {
+    console.error('Failed to load form data:', error);
+    return null;
+  }
+};
+
+// Helper function to clear form data from localStorage
+const clearFormData = () => {
+  try {
+    localStorage.removeItem(FORM_STORAGE_KEY);
+  } catch (error) {
+    console.error('Failed to clear form data:', error);
+  }
+};
 
 // Helper function to get user-friendly error messages
 const getErrorMessage = (error: any) => {
@@ -99,6 +141,40 @@ export const EmailGenerator = () => {
   const { user } = useAuth();
   const { usage, loading: usageLoading, refreshUsage } = useUsage();
   const { subscribed, subscription_tier, createCheckout } = useSubscription();
+
+  // Load form data from localStorage on component mount
+  useEffect(() => {
+    const savedData = loadFormData();
+    if (savedData) {
+      setProductService(savedData.productService);
+      setTargetAudience(savedData.targetAudience);
+      setSelectedIndustry(savedData.selectedIndustry);
+      setSelectedTone(savedData.selectedTone);
+      setCustomHook(savedData.customHook);
+      
+      // Show a subtle toast to let user know their data was restored
+      toast({
+        title: "Form Data Restored",
+        description: "Your previous form data has been restored.",
+      });
+    }
+  }, [toast]);
+
+  // Save form data to localStorage whenever any field changes
+  useEffect(() => {
+    const formData: FormData = {
+      productService,
+      targetAudience,
+      selectedIndustry,
+      selectedTone,
+      customHook
+    };
+    
+    // Only save if at least one field has content
+    if (productService || targetAudience || selectedIndustry || customHook) {
+      saveFormData(formData);
+    }
+  }, [productService, targetAudience, selectedIndustry, selectedTone, customHook]);
 
   const handleIndustryChange = (industry: string) => {
     setSelectedIndustry(industry);
@@ -212,6 +288,14 @@ export const EmailGenerator = () => {
     setCustomHook("");
     setEmailA("");
     setEmailB("");
+    
+    // Clear saved form data from localStorage
+    clearFormData();
+    
+    toast({
+      title: "Form Reset",
+      description: "All form data has been cleared.",
+    });
   };
 
   const regenerateEmails = () => {
@@ -297,6 +381,11 @@ export const EmailGenerator = () => {
                           </p>
                         </div>
                       )}
+                      <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
+                        <p className="text-xs text-blue-600">
+                          💾 Your form data is automatically saved and will persist across page reloads
+                        </p>
+                      </div>
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
