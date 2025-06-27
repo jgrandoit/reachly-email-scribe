@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -13,7 +14,7 @@ const Index = () => {
   const [currentView, setCurrentView] = useState<"home" | "dashboard" | "generator">("home");
   const { toast } = useToast();
   const { checkSubscription } = useSubscription();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
 
   useEffect(() => {
     // Check for success/canceled query params from Stripe
@@ -60,6 +61,30 @@ const Index = () => {
   };
 
   console.log("Current view:", currentView, "User logged in:", !!user);
+
+  // Show loading state while auth is loading
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If user is logged in, don't show homepage content during redirect
+  if (user && currentView === "home") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
