@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, Star } from "lucide-react";
+import { Check, Star, Mail, TrendingUp, Zap, Users, Headphones, Crown } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 
@@ -67,11 +67,11 @@ export const Pricing = ({ onGetStarted }: PricingProps) => {
           price="$0"
           description="Perfect for getting started"
           features={[
-            "10 emails per month",
-            "2 email variants per generation",
-            "4 tone options",
-            "Industry templates",
-            "Basic support",
+            { icon: Mail, text: "10 emails per month" },
+            { icon: Users, text: "2 email variants per generation" },
+            { icon: TrendingUp, text: "4 tone options (Friendly, Professional, Direct, Casual)" },
+            { icon: Star, text: "Industry templates" },
+            { icon: Headphones, text: "Basic support" },
           ]}
           buttonLabel={isCurrentPlan("free") ? "Current Plan" : "Get Started Free"}
           onClick={() => handlePlanSelect("free")}
@@ -84,13 +84,13 @@ export const Pricing = ({ onGetStarted }: PricingProps) => {
         <PricingCard
           title="Starter"
           price="$12"
-          description="per month • Ideal for growing outreach"
+          description="per month • Perfect for freelancers and growing teams"
           features={[
-            "50 emails per month",
-            "3 email variants per generation",
-            "All tone options",
-            "Industry templates",
-            "Priority support",
+            { icon: Mail, text: "50 emails per month" },
+            { icon: Users, text: "3 email variants per generation" },
+            { icon: TrendingUp, text: "All tone options" },
+            { icon: Star, text: "Industry templates" },
+            { icon: Headphones, text: "Priority support" },
           ]}
           buttonLabel={isCurrentPlan("starter") ? "Current Plan" : "Choose Starter"}
           onClick={() => handlePlanSelect("starter")}
@@ -103,14 +103,14 @@ export const Pricing = ({ onGetStarted }: PricingProps) => {
         <PricingCard
           title="Pro"
           price="$29"
-          description="per month • Best for scaling campaigns"
+          description="per month • Built for teams sending high-volume outreach"
           features={[
-            "Unlimited emails",
-            "5 email variants per generation",
-            "All tone options",
-            "Industry templates",
-            "Priority support",
-            "Advanced AI features",
+            { icon: Mail, text: "Unlimited emails" },
+            { icon: Users, text: "5 email variants per generation" },
+            { icon: TrendingUp, text: "All tone options" },
+            { icon: Star, text: "Industry templates" },
+            { icon: Headphones, text: "Priority support" },
+            { icon: Crown, text: "Advanced AI features" },
           ]}
           buttonLabel={isCurrentPlan("pro") ? "Current Plan" : "Upgrade to Pro"}
           onClick={() => handlePlanSelect("pro")}
@@ -128,7 +128,7 @@ type CardProps = {
   title: string;
   price: string;
   description: string;
-  features: string[];
+  features: Array<{ icon: any; text: string }>;
   buttonLabel: string;
   onClick: () => void;
   highlight?: boolean;
@@ -185,8 +185,8 @@ const PricingCard = ({
       <ul className="space-y-3">
         {features.map((feature, index) => (
           <li key={index} className="flex items-center gap-3 text-gray-700">
-            <Check className="text-green-600 w-5 h-5 flex-shrink-0" />
-            <span>{feature}</span>
+            <feature.icon className="text-blue-600 w-5 h-5 flex-shrink-0" />
+            <span>{feature.text}</span>
           </li>
         ))}
       </ul>

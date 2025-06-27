@@ -7,12 +7,12 @@ export const Features = () => {
     {
       icon: Brain,
       title: "AI-Powered Writing",
-      description: "Advanced AI analyzes your product and audience to craft compelling emails that convert"
+      description: "Crafts compelling, personalized emails proven to get responses"
     },
     {
       icon: Clock,
       title: "30-Second Generation",
-      description: "From idea to polished email in seconds. No more staring at blank screens"
+      description: "From idea to inbox-ready in under 30 seconds"
     },
     {
       icon: Target,
@@ -22,7 +22,7 @@ export const Features = () => {
     {
       icon: TrendingUp,
       title: "High Conversion",
-      description: "Proven email structures that get responses and drive results"
+      description: "Tested frameworks that consistently deliver replies and results"
     },
     {
       icon: Users,
@@ -32,7 +32,7 @@ export const Features = () => {
     {
       icon: Zap,
       title: "Instant Copy",
-      description: "One-click copy to clipboard. Ready to send immediately"
+      description: "Copy and send in one click — no edits required"
     }
   ];
 

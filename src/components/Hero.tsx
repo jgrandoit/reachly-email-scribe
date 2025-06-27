@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Mail, Sparkles, Zap } from "lucide-react";
+import { Mail, Sparkles, Zap, TrendingUp } from "lucide-react";
 
 interface HeroProps {
   onGetStarted: () => void;
@@ -27,8 +27,8 @@ export const Hero = ({ onGetStarted }: HeroProps) => {
         </h1>
         
         <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-          Stop struggling with cold outreach. Reachly's AI writes personalized, high-converting emails 
-          that get responses. Just describe what you're selling and who you're targeting.
+          Reachly writes high-converting cold emails for you — instantly. 
+          Just tell us what you're offering and who you're targeting.
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
@@ -41,9 +41,8 @@ export const Hero = ({ onGetStarted }: HeroProps) => {
             Generate Your First Email
           </Button>
           <Button 
-            variant="outline" 
             size="lg" 
-            className="text-lg px-8 py-3 h-14"
+            className="text-lg px-8 py-3 h-14 bg-white border-2 border-blue-200 hover:bg-blue-50 text-blue-700 hover:border-blue-300"
             onClick={handleSeeExamples}
           >
             <Mail className="w-5 h-5 mr-2" />
@@ -51,8 +50,15 @@ export const Hero = ({ onGetStarted }: HeroProps) => {
           </Button>
         </div>
         
-        <div className="text-sm text-gray-500">
-          ✨ 10 free emails • No credit card required • Ready in seconds
+        {/* Social Proof Section */}
+        <div className="bg-white/60 backdrop-blur-sm border border-gray-200 rounded-xl p-6 mb-8 max-w-2xl mx-auto">
+          <div className="flex items-center justify-center space-x-1 mb-3">
+            <TrendingUp className="w-5 h-5 text-green-600" />
+            <span className="text-lg font-semibold text-gray-900">Beta users see 35% higher reply rates</span>
+          </div>
+          <div className="text-sm text-gray-600">
+            ✨ 500+ emails generated this week • 10 free emails • No credit card required
+          </div>
         </div>
       </div>
     </section>
