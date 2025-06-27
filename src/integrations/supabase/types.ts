@@ -187,6 +187,10 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: undefined
       }
+      setup_test_user: {
+        Args: { p_email: string; p_tier: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

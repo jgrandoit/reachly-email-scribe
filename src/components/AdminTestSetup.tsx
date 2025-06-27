@@ -73,7 +73,8 @@ export const AdminTestSetup = () => {
     try {
       console.log(`Configuring test data for ${email} with tier ${tier}`);
       
-      const { data, error } = await supabase.rpc('setup_test_user', {
+      // Use direct RPC call since the function isn't in the generated types yet
+      const { data, error } = await supabase.rpc('setup_test_user' as any, {
         p_email: email,
         p_tier: tier
       });
