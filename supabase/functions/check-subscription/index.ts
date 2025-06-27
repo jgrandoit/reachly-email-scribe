@@ -61,7 +61,7 @@ serve(async (req) => {
       });
 
       // If this is a test account (no Stripe customer ID), return the database data directly
-      if (!existingSubscriber.stripe_customer_id && existingSubscriber.subscribed) {
+      if (!existingSubscriber.stripe_customer_id) {
         logStep("Returning test account subscription data");
         return new Response(JSON.stringify({
           subscribed: existingSubscriber.subscribed,
