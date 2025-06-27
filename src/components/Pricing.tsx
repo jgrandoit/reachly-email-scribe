@@ -1,9 +1,9 @@
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, Star, Mail, TrendingUp, Zap, Users, Headphones, Crown } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
+import { PricingCard } from "./PricingCard";
+import { pricingPlans } from "./PricingPlans";
 
 interface PricingProps {
   onGetStarted: () => void;
@@ -34,6 +34,21 @@ export const Pricing = ({ onGetStarted }: PricingProps) => {
     return false;
   };
 
+  const getButtonLabel = (planId: string) => {
+    if (isCurrentPlan(planId)) return "Current Plan";
+    
+    switch (planId) {
+      case "free":
+        return "Get Started Free";
+      case "starter":
+        return "Choose Starter";
+      case "pro":
+        return "Upgrade to Pro";
+      default:
+        return "Select Plan";
+    }
+  };
+
   return (
     <section id="pricing" className="container mx-auto px-4 py-20">
       <div className="text-center mb-16">
@@ -61,150 +76,23 @@ export const Pricing = ({ onGetStarted }: PricingProps) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-        {/* Free Plan */}
-        <PricingCard
-          title="Free"
-          price="$0"
-          description="Perfect for getting started"
-          features={[
-            { icon: Mail, text: "10 emails per month" },
-            { icon: Users, text: "2 email variants per generation" },
-            { icon: TrendingUp, text: "4 tone options (Friendly, Professional, Direct, Casual)" },
-            { icon: Star, text: "Industry templates" },
-            { icon: Headphones, text: "Basic support" },
-          ]}
-          buttonLabel={isCurrentPlan("free") ? "Current Plan" : "Get Started Free"}
-          onClick={() => handlePlanSelect("free")}
-          buttonVariant="outline"
-          isCurrentPlan={isCurrentPlan("free")}
-          disabled={isCurrentPlan("free") || loading}
-        />
-
-        {/* Starter Plan */}
-        <PricingCard
-          title="Starter"
-          price="$12"
-          description="per month • Perfect for freelancers and growing teams"
-          features={[
-            { icon: Mail, text: "50 emails per month" },
-            { icon: Users, text: "3 email variants per generation" },
-            { icon: TrendingUp, text: "All tone options" },
-            { icon: Star, text: "Industry templates" },
-            { icon: Headphones, text: "Priority support" },
-          ]}
-          buttonLabel={isCurrentPlan("starter") ? "Current Plan" : "Choose Starter"}
-          onClick={() => handlePlanSelect("starter")}
-          buttonVariant="primary"
-          isCurrentPlan={isCurrentPlan("starter")}
-          disabled={isCurrentPlan("starter") || loading}
-        />
-
-        {/* Pro Plan */}
-        <PricingCard
-          title="Pro"
-          price="$29"
-          description="per month • Built for teams sending high-volume outreach"
-          features={[
-            { icon: Mail, text: "Unlimited emails" },
-            { icon: Users, text: "5 email variants per generation" },
-            { icon: TrendingUp, text: "All tone options" },
-            { icon: Star, text: "Industry templates" },
-            { icon: Headphones, text: "Priority support" },
-            { icon: Crown, text: "Advanced AI features" },
-          ]}
-          buttonLabel={isCurrentPlan("pro") ? "Current Plan" : "Upgrade to Pro"}
-          onClick={() => handlePlanSelect("pro")}
-          highlight
-          mostPopular
-          isCurrentPlan={isCurrentPlan("pro")}
-          disabled={isCurrentPlan("pro") || loading}
-        />
+        {pricingPlans.map((plan) => (
+          <PricingCard
+            key={plan.id}
+            title={plan.title}
+            price={plan.price}
+            description={plan.description}
+            features={plan.features}
+            buttonLabel={getButtonLabel(plan.id)}
+            onClick={() => handlePlanSelect(plan.id)}
+            buttonVariant={plan.buttonVariant}
+            highlight={plan.highlight}
+            mostPopular={plan.mostPopular}
+            isCurrentPlan={isCurrentPlan(plan.id)}
+            disabled={isCurrentPlan(plan.id) || loading}
+          />
+        ))}
       </div>
     </section>
   );
 };
-
-type CardProps = {
-  title: string;
-  price: string;
-  description: string;
-  features: Array<{ icon: any; text: string }>;
-  buttonLabel: string;
-  onClick: () => void;
-  highlight?: boolean;
-  mostPopular?: boolean;
-  buttonVariant?: "primary" | "outline" | "gradient";
-  isCurrentPlan?: boolean;
-  disabled?: boolean;
-};
-
-const PricingCard = ({
-  title,
-  price,
-  description,
-  features,
-  buttonLabel,
-  onClick,
-  highlight,
-  mostPopular,
-  buttonVariant = "primary",
-  isCurrentPlan,
-  disabled,
-}: CardProps) => (
-  <Card
-    className={`relative backdrop-blur-sm ${
-      isCurrentPlan
-        ? "border-green-500 bg-green-50/70 scale-105"
-        : highlight || mostPopular
-        ? "border-blue-500 bg-blue-50/70 scale-105"
-        : "border-gray-200 bg-white/70"
-    }`}
-  >
-    {mostPopular && !isCurrentPlan && (
-      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-1 rounded-full text-sm font-medium flex items-center space-x-1">
-          <Star className="w-4 h-4" />
-          <span>Most Popular</span>
-        </div>
-      </div>
-    )}
-    {isCurrentPlan && (
-      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-        <div className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-1 rounded-full text-sm font-medium flex items-center space-x-1">
-          <Check className="w-4 h-4" />
-          <span>Your Plan</span>
-        </div>
-      </div>
-    )}
-    <CardHeader className="text-center">
-      <CardTitle className="text-2xl">{title}</CardTitle>
-      <div className="text-4xl font-bold text-gray-900 mt-4">{price}</div>
-      <CardDescription className="text-gray-600">{description}</CardDescription>
-    </CardHeader>
-    <CardContent className="space-y-4">
-      <ul className="space-y-3">
-        {features.map((feature, index) => (
-          <li key={index} className="flex items-center gap-3 text-gray-700">
-            <feature.icon className="text-blue-600 w-5 h-5 flex-shrink-0" />
-            <span>{feature.text}</span>
-          </li>
-        ))}
-      </ul>
-      <Button
-        onClick={onClick}
-        disabled={disabled}
-        className={`w-full mt-6 ${
-          isCurrentPlan
-            ? "bg-green-600 hover:bg-green-700 text-white cursor-default"
-            : buttonVariant === "outline"
-            ? "bg-white border border-gray-300 hover:bg-gray-100 text-gray-900"
-            : buttonVariant === "gradient" || mostPopular
-            ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
-            : "bg-blue-600 hover:bg-blue-700 text-white"
-        }`}
-      >
-        {buttonLabel}
-      </Button>
-    </CardContent>
-  </Card>
-);
