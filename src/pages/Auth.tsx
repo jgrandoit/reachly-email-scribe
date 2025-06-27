@@ -9,6 +9,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate } from "react-router-dom";
 
+// Comprehensive auth state cleanup utility
+const cleanupAuthState = () => {
+  // Remove standard auth tokens
+  localStorage.removeItem('supabase.auth.token');
+  
+  // Remove all Supabase auth keys from localStorage
+  Object.keys(localStorage).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      localStorage.removeItem(key);
+    }
+  });
+  
+  // Remove from sessionStorage if in use
+  Object.keys(sessionStorage || {}).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      sessionStorage.removeItem(key);
+    }
+  });
+};
+
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
@@ -21,9 +41,15 @@ const Auth = () => {
   useEffect(() => {
     // Check if user is already authenticated
     const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        navigate("/");
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          navigate("/");
+        }
+      } catch (error) {
+        console.error('Error checking session:', error);
+        // Clean up on error
+        cleanupAuthState();
       }
     };
     checkUser();
@@ -44,19 +70,61 @@ const Auth = () => {
 
     try {
       if (isLogin) {
+        // Clean up existing state before login
+        cleanupAuthState();
+        
+        // Attempt global sign out first
+        try {
+          await supabase.auth.signOut({ scope: 'global' });
+        } catch (err) {
+          console.log('Global signout error (expected):', err);
+          // Continue even if this fails
+        }
+
+        console.log('Attempting to sign in with:', email);
+        
         const { data, error } = await supabase.auth.signInWithPassword({
-          email,
+          email: email.trim(),
           password,
         });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Auth error:', error);
+          
+          // Provide more specific error messages
+          if (error.message.includes('Invalid login credentials')) {
+            toast({
+              title: "Login Failed",
+              description: "Invalid email or password. Please check your credentials and try again.",
+              variant: "destructive",
+            });
+          } else if (error.message.includes('Email not confirmed')) {
+            toast({
+              title: "Email Not Confirmed",
+              description: "Please check your email and confirm your account before signing in.",
+              variant: "destructive",
+            });
+          } else {
+            toast({
+              title: "Error",
+              description: error.message || "An error occurred during authentication.",
+              variant: "destructive",
+            });
+          }
+          return;
+        }
 
         if (data.user) {
+          console.log('Sign in successful for:', data.user.email);
           toast({
             title: "Success",
             description: "Welcome back!",
           });
-          navigate("/");
+          
+          // Force page reload for clean state
+          setTimeout(() => {
+            window.location.href = "/";
+          }, 500);
         }
       } else {
         if (!fullName) {
@@ -69,10 +137,13 @@ const Auth = () => {
           return;
         }
 
+        // Clean up existing state before signup
+        cleanupAuthState();
+
         const redirectUrl = `${window.location.origin}/`;
         
         const { data, error } = await supabase.auth.signUp({
-          email,
+          email: email.trim(),
           password,
           options: {
             emailRedirectTo: redirectUrl,
@@ -82,28 +153,49 @@ const Auth = () => {
           },
         });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Signup error:', error);
+          
+          if (error.message.includes('User already registered')) {
+            toast({
+              title: "Account Exists",
+              description: "An account with this email already exists. Please sign in instead.",
+              variant: "destructive",
+            });
+            setIsLogin(true);
+          } else {
+            toast({
+              title: "Error",
+              description: error.message || "An error occurred during registration.",
+              variant: "destructive",
+            });
+          }
+          return;
+        }
 
         if (data.user) {
           toast({
             title: "Success",
             description: "Account created successfully! Please check your email for verification.",
           });
-          // For development, you might want to auto-login without email verification
-          // Uncomment the line below if email confirmation is disabled in Supabase
-          // navigate("/");
         }
       }
     } catch (error: any) {
-      console.error("Auth error:", error);
+      console.error("Unexpected auth error:", error);
       toast({
         title: "Error",
-        description: error.message || "An error occurred during authentication.",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
+  };
+
+  const fillTestCredentials = (testEmail: string) => {
+    setEmail(testEmail);
+    setPassword("testpassword123");
+    setIsLogin(true);
   };
 
   return (
@@ -137,6 +229,36 @@ const Auth = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {isLogin && (
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800 mb-2 font-medium">Test Accounts:</p>
+                <div className="space-y-1">
+                  <button
+                    type="button"
+                    onClick={() => fillTestCredentials("testfree@gmail.com")}
+                    className="text-xs text-blue-600 hover:text-blue-800 block"
+                  >
+                    Free Tier: testfree@gmail.com
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => fillTestCredentials("teststarter@gmail.com")}
+                    className="text-xs text-blue-600 hover:text-blue-800 block"
+                  >
+                    Starter Tier: teststarter@gmail.com
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => fillTestCredentials("testpro@gmail.com")}
+                    className="text-xs text-blue-600 hover:text-blue-800 block"
+                  >
+                    Pro Tier: testpro@gmail.com
+                  </button>
+                  <p className="text-xs text-gray-600 mt-1">Password: testpassword123</p>
+                </div>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-4">
               {!isLogin && (
                 <div className="space-y-2">
