@@ -98,124 +98,24 @@ const Auth = () => {
         if (error) {
           console.error('Auth error details:', error);
           
-          // Check if this is a test account that might need to be created
-          if (error.message.includes('Invalid login credentials') && 
-              (email.includes('testfree@gmail.com') || 
-               email.includes('teststarter@gmail.com') || 
-               email.includes('testpro@gmail.com'))) {
-            
-            console.log('Test account not found, attempting to create...');
-            
-            // Try to create the test account
-            const signUpEmail = email.trim().toLowerCase();
-            const tier = signUpEmail.includes('testfree') ? 'free' : 
-                        signUpEmail.includes('teststarter') ? 'starter' : 'pro';
-            
-            const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-              email: signUpEmail,
-              password,
-              options: {
-                emailRedirectTo: `${window.location.origin}/`,
-                data: {
-                  full_name: tier === 'free' ? 'Test Free' : 
-                           tier === 'starter' ? 'Test Starter' : 'Test Pro',
-                },
-              },
+          if (error.message.includes('Invalid login credentials')) {
+            toast({
+              title: "Login Failed",
+              description: "Invalid email or password. Please check your credentials and try again.",
+              variant: "destructive",
             });
-
-            if (signUpError) {
-              console.error('Signup error:', signUpError);
-              if (signUpError.message.includes('User already registered')) {
-                toast({
-                  title: "Authentication Issue",
-                  description: "Test account exists but password may be incorrect. Please try 'testpassword123' or contact support.",
-                  variant: "destructive",
-                });
-              } else {
-                toast({
-                  title: "Error",
-                  description: signUpError.message,
-                  variant: "destructive",
-                });
-              }
-              return;
-            }
-
-            if (signUpData.user) {
-              console.log('Test account created, setting up test data...');
-              
-              // Set up the test user data
-              try {
-                const { error: setupError } = await supabase.rpc('setup_test_user', {
-                  p_email: signUpEmail,
-                  p_tier: tier
-                });
-                
-                if (setupError) {
-                  console.error('Setup error:', setupError);
-                }
-              } catch (setupErr) {
-                console.error('Setup function error:', setupErr);
-              }
-
-              toast({
-                title: "Test Account Created",
-                description: "Test account has been created and configured. You can now sign in.",
-              });
-              
-              // Now try to sign in again
-              setTimeout(async () => {
-                try {
-                  const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
-                    email: signUpEmail,
-                    password,
-                  });
-                  
-                  if (retryError) {
-                    console.error('Retry signin error:', retryError);
-                    toast({
-                      title: "Sign In Failed",
-                      description: "Account created but sign in failed. Please try again.",
-                      variant: "destructive",
-                    });
-                  } else if (retryData.user) {
-                    console.log('Retry signin successful');
-                    toast({
-                      title: "Success",
-                      description: "Welcome to Reachly!",
-                    });
-                    setTimeout(() => {
-                      window.location.href = "/";
-                    }, 500);
-                  }
-                } catch (retryErr) {
-                  console.error('Retry signin unexpected error:', retryErr);
-                }
-                setLoading(false);
-              }, 1000);
-              return;
-            }
+          } else if (error.message.includes('Email not confirmed')) {
+            toast({
+              title: "Email Not Confirmed",
+              description: "Please check your email and confirm your account before signing in.",
+              variant: "destructive",
+            });
           } else {
-            // Regular auth error handling
-            if (error.message.includes('Invalid login credentials')) {
-              toast({
-                title: "Login Failed",
-                description: "Invalid email or password. Please check your credentials and try again.",
-                variant: "destructive",
-              });
-            } else if (error.message.includes('Email not confirmed')) {
-              toast({
-                title: "Email Not Confirmed",
-                description: "Please check your email and confirm your account before signing in.",
-                variant: "destructive",
-              });
-            } else {
-              toast({
-                title: "Error",
-                description: error.message || "An error occurred during authentication.",
-                variant: "destructive",
-              });
-            }
+            toast({
+              title: "Error",
+              description: error.message || "An error occurred during authentication.",
+              variant: "destructive",
+            });
           }
           return;
         }
@@ -299,12 +199,6 @@ const Auth = () => {
     }
   };
 
-  const fillTestCredentials = (testEmail: string) => {
-    setEmail(testEmail);
-    setPassword("testpassword123");
-    setIsLogin(true);
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -336,36 +230,6 @@ const Auth = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {isLogin && (
-              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-800 mb-2 font-medium">Test Accounts (will be auto-created):</p>
-                <div className="space-y-1">
-                  <button
-                    type="button"
-                    onClick={() => fillTestCredentials("testfree@gmail.com")}
-                    className="text-xs text-blue-600 hover:text-blue-800 block"
-                  >
-                    Free Tier: testfree@gmail.com
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => fillTestCredentials("teststarter@gmail.com")}
-                    className="text-xs text-blue-600 hover:text-blue-800 block"
-                  >
-                    Starter Tier: teststarter@gmail.com
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => fillTestCredentials("testpro@gmail.com")}
-                    className="text-xs text-blue-600 hover:text-blue-800 block"
-                  >
-                    Pro Tier: testpro@gmail.com
-                  </button>
-                  <p className="text-xs text-gray-600 mt-1">Password: testpassword123</p>
-                </div>
-              </div>
-            )}
-
             <form onSubmit={handleSubmit} className="space-y-4">
               {!isLogin && (
                 <div className="space-y-2">

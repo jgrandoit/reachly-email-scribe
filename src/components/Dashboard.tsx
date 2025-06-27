@@ -17,12 +17,6 @@ export const Dashboard = ({ onStartGenerator }: DashboardProps) => {
   const { subscribed, subscription_tier, createCheckout, openCustomerPortal, loading } = useSubscription();
   const { usage, loading: usageLoading } = useUsage();
 
-  // Add debugging logs
-  console.log('Dashboard - User:', user?.email);
-  console.log('Dashboard - Subscribed:', subscribed);
-  console.log('Dashboard - Subscription tier:', subscription_tier);
-  console.log('Dashboard - Loading:', loading);
-
   const handleUpgrade = async () => {
     if (subscription_tier === "Starter") {
       await createCheckout("pro");
@@ -41,13 +35,6 @@ export const Dashboard = ({ onStartGenerator }: DashboardProps) => {
           <p className="text-gray-600">
             Your AI-powered cold email generation dashboard
           </p>
-          {/* Debug info */}
-          <div className="mt-4 p-4 bg-gray-100 rounded-lg text-sm">
-            <p><strong>Debug Info:</strong></p>
-            <p>Subscribed: {subscribed ? 'Yes' : 'No'}</p>
-            <p>Tier: {subscription_tier || 'None'}</p>
-            <p>Loading: {loading ? 'Yes' : 'No'}</p>
-          </div>
         </div>
 
         <div className="grid md:grid-cols-3 gap-6 mb-8">
@@ -80,7 +67,7 @@ export const Dashboard = ({ onStartGenerator }: DashboardProps) => {
             </CardContent>
           </Card>
 
-          {/* Emails Generated - Now using real data */}
+          {/* Emails Generated */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
