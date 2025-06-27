@@ -8,13 +8,17 @@ import { TestTube, X, Settings } from "lucide-react";
 import { useTestMode } from "@/hooks/useTestMode";
 import { useAuth } from "@/hooks/useAuth";
 
+const ADMIN_EMAIL = "blessup127@gmail.com";
+
 export const TestModePanel = () => {
   const { isTestMode, testTier, setTestTier, clearTestMode } = useTestMode();
   const { user } = useAuth();
   const [isVisible, setIsVisible] = useState(false);
 
-  // Only show in development or when test mode is active
-  const shouldShow = process.env.NODE_ENV === 'development' || isTestMode;
+  const isAdmin = user?.email === ADMIN_EMAIL;
+
+  // Only show in development or when test mode is active AND user is admin
+  const shouldShow = (process.env.NODE_ENV === 'development' || isTestMode) && isAdmin;
 
   if (!shouldShow) return null;
 
