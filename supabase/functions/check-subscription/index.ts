@@ -27,10 +27,6 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
-    logStep("Stripe key verified");
-
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header provided");
     logStep("Authorization header found");
@@ -43,6 +39,45 @@ serve(async (req) => {
     const user = userData.user;
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
+
+    // First check if user already has subscription data in our database
+    logStep("Checking existing subscription data in database");
+    const { data: existingSubscriber, error: subscriberError } = await supabaseClient
+      .from("subscribers")
+      .select("*")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (subscriberError) {
+      logStep("Error checking existing subscriber", { error: subscriberError.message });
+      throw new Error(`Database error: ${subscriberError.message}`);
+    }
+
+    if (existingSubscriber) {
+      logStep("Found existing subscription data", { 
+        subscribed: existingSubscriber.subscribed, 
+        tier: existingSubscriber.subscription_tier,
+        hasStripeId: !!existingSubscriber.stripe_customer_id
+      });
+
+      // If this is a test account (no Stripe customer ID), return the database data directly
+      if (!existingSubscriber.stripe_customer_id && existingSubscriber.subscribed) {
+        logStep("Returning test account subscription data");
+        return new Response(JSON.stringify({
+          subscribed: existingSubscriber.subscribed,
+          subscription_tier: existingSubscriber.subscription_tier,
+          subscription_end: existingSubscriber.subscription_end
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+    }
+
+    // For Stripe-based subscriptions, check with Stripe
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
+    logStep("Stripe key verified");
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
@@ -57,7 +92,7 @@ serve(async (req) => {
         subscription_tier: null,
         subscription_end: null,
         updated_at: new Date().toISOString(),
-      }, { onConflict: 'email' });
+      }, { onConflict: 'user_id' });
       return new Response(JSON.stringify({ subscribed: false }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -104,7 +139,7 @@ serve(async (req) => {
       subscription_tier: subscriptionTier,
       subscription_end: subscriptionEnd,
       updated_at: new Date().toISOString(),
-    }, { onConflict: 'email' });
+    }, { onConflict: 'user_id' });
 
     logStep("Updated database with subscription info", { subscribed: hasActiveSub, subscriptionTier });
     return new Response(JSON.stringify({
