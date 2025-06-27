@@ -62,9 +62,9 @@ const Index = () => {
 
   const handleBackToHome = () => {
     console.log("Back to home clicked, user:", !!user, "current view:", currentView);
-    const newView = user ? "dashboard" : "home";
-    console.log("Setting view to:", newView);
-    setCurrentView(newView);
+    // Always go to home page when logo is clicked
+    console.log("Setting view to: home");
+    setCurrentView("home");
   };
 
   console.log("Current view:", currentView, "User logged in:", !!user);
