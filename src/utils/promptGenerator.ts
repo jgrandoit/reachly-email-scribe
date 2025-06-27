@@ -8,6 +8,43 @@ export interface PromptConfig {
   tier: string;
 }
 
+export const generateDualPrompts = (config: PromptConfig): { promptA: string; promptB: string } => {
+  const { tone, customHook, product, audience } = config;
+  
+  const hookText = customHook || "We've been working with companies like yours and noticed some common challenges.";
+  
+  const baseInstructions = `You are a world-class cold email copywriter. Your emails convert because they feel personal, valuable, and human-written.
+
+Target audience: ${audience}
+Product/Service: ${product}
+Write in a ${tone} tone that fits this audience.
+Personal hook: ${hookText}
+
+Write ONE compelling cold email under 100 words. Format with a compelling subject line followed by the email body.`;
+
+  const promptA = `${baseInstructions}
+
+Use the PERSUASIVE PITCH approach (AIDA framework):
+- Attention: Start with something that grabs their attention
+- Interest: Build interest in your solution
+- Desire: Create desire for the outcome
+- Action: Clear, specific call-to-action
+
+Make it feel like it was written specifically for this person, not a mass email.`;
+
+  const promptB = `${baseInstructions}
+
+Use the PROBLEM-SOLUTION approach:
+- Problem: Identify a specific pain point they likely face
+- Solution: Present your offer as the direct solution
+- Benefit: Highlight the key outcome they'll get
+- Action: Simple, low-friction next step
+
+Focus on problems that keep them up at night, then position your solution as the relief.`;
+
+  return { promptA, promptB };
+};
+
 export const generatePrompt = (config: PromptConfig): string => {
   const { framework, tone, customHook, product, audience, tier } = config;
   
