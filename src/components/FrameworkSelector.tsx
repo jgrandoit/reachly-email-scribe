@@ -1,4 +1,3 @@
-
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -19,17 +18,17 @@ interface FrameworkSelectorProps {
 const frameworks = [
   { 
     value: "aida", 
-    label: "AIDA",
+    label: "Persuasive Pitch (for AIDA)",
     description: "Attention, Interest, Desire, Action - Great for building engagement"
   },
   { 
     value: "pas", 
-    label: "PAS",
+    label: "Problem-Solution (for PAS)",
     description: "Problem, Agitate, Solution - Perfect for problem-focused outreach"
   },
   { 
     value: "four_sentence", 
-    label: "4-Sentence",
+    label: "Before-After (for BAB)",
     description: "Pro copywriters' favorite - Concise and direct"
   }
 ];
