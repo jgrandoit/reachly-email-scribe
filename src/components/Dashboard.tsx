@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ import { UsageIndicator } from "./UsageIndicator";
 
 interface DashboardProps {
   onStartGenerator: () => void;
+  onViewAnalytics: () => void;
 }
 
 interface GeneratedEmail {
@@ -23,7 +25,7 @@ interface GeneratedEmail {
   created_at: string;
 }
 
-export const Dashboard = ({ onStartGenerator }: DashboardProps) => {
+export const Dashboard = ({ onStartGenerator, onViewAnalytics }: DashboardProps) => {
   const { user } = useAuth();
   const { usage, loading: usageLoading } = useUsage();
   const { subscribed, subscription_tier, createCheckout } = useSubscription();
@@ -73,6 +75,15 @@ export const Dashboard = ({ onStartGenerator }: DashboardProps) => {
               >
                 <Mail className="w-4 h-4 mr-2" />
                 {usage.canGenerate ? 'Create New Email' : 'Upgrade to Generate'}
+              </Button>
+              
+              <Button 
+                onClick={onViewAnalytics}
+                variant="outline" 
+                className="w-full"
+              >
+                <BarChart3 className="w-4 h-4 mr-2" />
+                View Analytics
               </Button>
               
               {!subscribed && (

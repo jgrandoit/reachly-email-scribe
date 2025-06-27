@@ -9,7 +9,7 @@ import { useEffect } from "react";
 interface HeaderProps {
   onGetStarted: () => void;
   onBackToHome: () => void;
-  currentView: "home" | "dashboard" | "generator";
+  currentView: "home" | "dashboard" | "generator" | "analytics";
 }
 
 export const Header = ({ onGetStarted, onBackToHome, currentView }: HeaderProps) => {
