@@ -27,28 +27,6 @@ export const Pricing = ({ onGetStarted }: PricingProps) => {
     await createCheckout(plan);
   };
 
-  const isCurrentPlan = (planTier: string) => {
-    if (planTier === "free") return !subscribed;
-    if (planTier === "starter") return subscription_tier === "Starter";
-    if (planTier === "pro") return subscription_tier === "Pro";
-    return false;
-  };
-
-  const getButtonLabel = (planId: string) => {
-    if (isCurrentPlan(planId)) return "Current Plan";
-    
-    switch (planId) {
-      case "free":
-        return "Get Started Free";
-      case "starter":
-        return "Choose Starter";
-      case "pro":
-        return "Upgrade to Pro";
-      default:
-        return "Select Plan";
-    }
-  };
-
   return (
     <section id="pricing" className="container mx-auto px-4 py-20">
       <div className="text-center mb-16">
@@ -79,17 +57,8 @@ export const Pricing = ({ onGetStarted }: PricingProps) => {
         {pricingPlans.map((plan) => (
           <PricingCard
             key={plan.id}
-            title={plan.title}
-            price={plan.price}
-            description={plan.description}
-            features={plan.features}
-            buttonLabel={getButtonLabel(plan.id)}
-            onClick={() => handlePlanSelect(plan.id)}
-            buttonVariant={plan.buttonVariant}
-            highlight={plan.highlight}
-            mostPopular={plan.mostPopular}
-            isCurrentPlan={isCurrentPlan(plan.id)}
-            disabled={isCurrentPlan(plan.id) || loading}
+            plan={plan}
+            onUpgrade={handlePlanSelect}
           />
         ))}
       </div>
