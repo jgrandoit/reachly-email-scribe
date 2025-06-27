@@ -71,7 +71,7 @@ const Index = () => {
       />
       
       {currentView === "home" && (
-        <div className="space-y-20 pb-20">
+        <div className="pb-20">
           <Hero onGetStarted={handleGetStarted} />
           <Features />
           <Pricing onGetStarted={handleGetStarted} />

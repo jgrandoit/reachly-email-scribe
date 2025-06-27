@@ -12,8 +12,8 @@ export const Hero = ({ onGetStarted }: HeroProps) => {
   };
 
   return (
-    <section className="container mx-auto px-4 pt-20 pb-16 text-center">
-      <div className="max-w-4xl mx-auto">
+    <section className="container mx-auto px-4 pt-20 pb-8">
+      <div className="max-w-4xl mx-auto text-center">
         <div className="inline-flex items-center space-x-2 bg-white/60 backdrop-blur-sm border border-blue-200 rounded-full px-4 py-2 mb-6">
           <Sparkles className="w-4 h-4 text-blue-600" />
           <span className="text-sm font-medium text-blue-800">AI-Powered Cold Email Generator</span>
