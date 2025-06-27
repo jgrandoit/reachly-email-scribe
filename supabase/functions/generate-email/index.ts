@@ -21,11 +21,11 @@ const USAGE_LIMITS = {
   pro: -1 // unlimited
 };
 
-// Define AI models per tier
+// Define AI models per tier - Updated to use correct ChatGPT models
 const AI_MODELS = {
-  free: 'gpt-4o-mini',
-  starter: 'gpt-4o-mini',
-  pro: 'gpt-4o' // Pro users get the premium model
+  free: 'gpt-3.5-turbo', // ChatGPT 3.5 for free plan
+  starter: 'gpt-4o',     // ChatGPT 4o for starter plan
+  pro: 'gpt-4'          // ChatGPT 4 for pro plan
 };
 
 serve(async (req) => {
@@ -181,7 +181,7 @@ Requirements:
           }
         ],
         temperature: 0.7,
-        max_tokens: aiModel === 'gpt-4o' ? 1500 : 1200 // Pro users get more tokens
+        max_tokens: aiModel === 'gpt-4' ? 1500 : aiModel === 'gpt-4o' ? 1200 : 800 // Different token limits per model
       })
     });
 

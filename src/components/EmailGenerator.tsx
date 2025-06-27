@@ -365,13 +365,16 @@ export const EmailGenerator = () => {
   // Get AI model based on user tier
   const getAIModel = () => {
     const userTier = subscribed ? (subscription_tier?.toLowerCase() || 'starter') : 'free';
-    if (userTier === 'pro') return 'GPT-4';
-    return 'GPT-4o-mini';
+    if (userTier === 'pro') return 'ChatGPT 4';
+    if (userTier === 'starter') return 'ChatGPT 4o';
+    return 'ChatGPT 3.5';
   };
 
   const getModelBadgeColor = () => {
     const model = getAIModel();
-    return model === 'GPT-4' ? 'bg-gradient-to-r from-yellow-500 to-orange-500' : 'bg-gray-500';
+    if (model === 'ChatGPT 4') return 'bg-gradient-to-r from-yellow-500 to-orange-500';
+    if (model === 'ChatGPT 4o') return 'bg-gradient-to-r from-blue-500 to-purple-500';
+    return 'bg-gray-500';
   };
 
   return (
@@ -396,7 +399,7 @@ export const EmailGenerator = () => {
                 <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-white text-sm font-medium ${getModelBadgeColor()}`}>
                   <Bot className="w-4 h-4" />
                   Powered by {getAIModel()}
-                  {getAIModel() === 'GPT-4' && <Crown className="w-4 h-4" />}
+                  {getAIModel() === 'ChatGPT 4' && <Crown className="w-4 h-4" />}
                 </div>
               </div>
               
@@ -429,7 +432,7 @@ export const EmailGenerator = () => {
                         <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-md">
                           <p className="text-sm text-yellow-700">
                             <Crown className="w-4 h-4 inline mr-1" />
-                            Upgrade to Pro for GPT-4 powered emails with superior writing quality
+                            Upgrade to Pro for ChatGPT 4 powered emails with superior writing quality
                           </p>
                         </div>
                       )}
@@ -577,7 +580,7 @@ export const EmailGenerator = () => {
                         <AlertDescription className="text-yellow-800">
                           <div className="font-medium mb-1">Want superior email quality?</div>
                           <div className="text-sm">
-                            Pro users get access to GPT-4, our most advanced AI model for sharper, more persuasive writing.{' '}
+                            Pro users get access to ChatGPT 4, our most advanced AI model for sharper, more persuasive writing.{' '}
                             <Button 
                               variant="link" 
                               className="p-0 ml-1 h-auto text-yellow-700 font-medium"
