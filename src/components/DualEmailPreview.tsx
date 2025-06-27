@@ -6,6 +6,8 @@ import { Copy, ThumbsUp, Wrench, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
+import { EmailAnalyzer } from "./EmailAnalyzer";
 
 interface DualEmailPreviewProps {
   emailA: string;
@@ -33,6 +35,9 @@ export const DualEmailPreview = ({
   const [isRating, setIsRating] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { subscribed, subscription_tier, createCheckout } = useSubscription();
+
+  const isPro = subscribed && subscription_tier?.toLowerCase() === 'pro';
 
   const copyToClipboard = (email: string, option: string) => {
     navigator.clipboard.writeText(email);
@@ -87,6 +92,10 @@ export const DualEmailPreview = ({
     }
   };
 
+  const handleUpgrade = async () => {
+    await createCheckout("pro");
+  };
+
   if (!emailA && !emailB) {
     return (
       <Card className="backdrop-blur-sm bg-white/60 border border-blue-200">
@@ -107,131 +116,163 @@ export const DualEmailPreview = ({
   return (
     <div className="space-y-6">
       {/* Option A - Persuasive Pitch */}
-      <Card className="backdrop-blur-sm bg-white/60 border border-blue-200">
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span className="text-blue-600">Option A: Persuasive Pitch</span>
-            <Button 
-              onClick={onRegenerate} 
-              variant="outline" 
-              size="sm"
-              disabled={!canRegenerate}
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Regenerate Both
-            </Button>
-          </CardTitle>
-          <p className="text-sm text-gray-600">
-            AIDA framework - Attention, Interest, Desire, Action
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="bg-white/80 p-4 rounded-lg border min-h-[200px] font-mono text-sm whitespace-pre-wrap">
-            {emailA || "Generating..."}
-          </div>
-          
-          <div className="flex gap-2">
-            <Button 
-              onClick={() => copyToClipboard(emailA, "Option A")} 
-              className="flex-1" 
-              variant="outline"
-              disabled={!emailA}
-            >
-              <Copy className="w-4 h-4 mr-2" />
-              Copy Option A
-            </Button>
-          </div>
-
-          {emailA && (
-            <div className="border-t pt-4">
-              <p className="text-sm font-medium mb-3">Rate this email:</p>
-              <div className="flex gap-3">
-                <Button
-                  onClick={() => handleRating(emailA, 'persuasive_pitch', 'useful')}
-                  disabled={isRating || ratingA !== null}
-                  variant={ratingA ? "secondary" : "outline"}
-                  className="flex-1"
+      <div className="grid lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <Card className="backdrop-blur-sm bg-white/60 border border-blue-200">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span className="text-blue-600">Option A: Persuasive Pitch</span>
+                <Button 
+                  onClick={onRegenerate} 
+                  variant="outline" 
+                  size="sm"
+                  disabled={!canRegenerate}
                 >
-                  <ThumbsUp className="w-4 h-4 mr-2" />
-                  🔥 Useful
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Regenerate Both
                 </Button>
-                <Button
-                  onClick={() => handleRating(emailA, 'persuasive_pitch', 'needs_work')}
-                  disabled={isRating || ratingA !== null}
-                  variant={ratingA ? "secondary" : "outline"}
-                  className="flex-1"
+              </CardTitle>
+              <p className="text-sm text-gray-600">
+                AIDA framework - Attention, Interest, Desire, Action
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="bg-white/80 p-4 rounded-lg border min-h-[200px] font-mono text-sm whitespace-pre-wrap">
+                {emailA || "Generating..."}
+              </div>
+              
+              <div className="flex gap-2">
+                <Button 
+                  onClick={() => copyToClipboard(emailA, "Option A")} 
+                  className="flex-1" 
+                  variant="outline"
+                  disabled={!emailA}
                 >
-                  <Wrench className="w-4 h-4 mr-2" />
-                  🛠 Needs work
+                  <Copy className="w-4 h-4 mr-2" />
+                  Copy Option A
                 </Button>
               </div>
-              {ratingA && (
-                <p className="text-xs text-green-600 mt-2 text-center">
-                  ✅ Thanks for your feedback!
-                </p>
+
+              {emailA && (
+                <div className="border-t pt-4">
+                  <p className="text-sm font-medium mb-3">Rate this email:</p>
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={() => handleRating(emailA, 'persuasive_pitch', 'useful')}
+                      disabled={isRating || ratingA !== null}
+                      variant={ratingA ? "secondary" : "outline"}
+                      className="flex-1"
+                    >
+                      <ThumbsUp className="w-4 h-4 mr-2" />
+                      🔥 Useful
+                    </Button>
+                    <Button
+                      onClick={() => handleRating(emailA, 'persuasive_pitch', 'needs_work')}
+                      disabled={isRating || ratingA !== null}
+                      variant={ratingA ? "secondary" : "outline"}
+                      className="flex-1"
+                    >
+                      <Wrench className="w-4 h-4 mr-2" />
+                      🛠 Needs work
+                    </Button>
+                  </div>
+                  {ratingA && (
+                    <p className="text-xs text-green-600 mt-2 text-center">
+                      ✅ Thanks for your feedback!
+                    </p>
+                  )}
+                </div>
               )}
-            </div>
+            </CardContent>
+          </Card>
+        </div>
+        
+        {/* Email Analyzer for Option A */}
+        <div className="lg:col-span-1">
+          {emailA && (
+            <EmailAnalyzer 
+              email={emailA} 
+              emailType="A" 
+              isPro={isPro}
+              onUpgrade={handleUpgrade}
+            />
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Option B - Problem/Solution */}
-      <Card className="backdrop-blur-sm bg-white/60 border border-blue-200">
-        <CardHeader>
-          <CardTitle className="text-indigo-600">Option B: Problem/Solution</CardTitle>
-          <p className="text-sm text-gray-600">
-            Direct approach - Problem identification and solution presentation
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="bg-white/80 p-4 rounded-lg border min-h-[200px] font-mono text-sm whitespace-pre-wrap">
-            {emailB || "Generating..."}
-          </div>
-          
-          <div className="flex gap-2">
-            <Button 
-              onClick={() => copyToClipboard(emailB, "Option B")} 
-              className="flex-1" 
-              variant="outline"
-              disabled={!emailB}
-            >
-              <Copy className="w-4 h-4 mr-2" />
-              Copy Option B
-            </Button>
-          </div>
-
-          {emailB && (
-            <div className="border-t pt-4">
-              <p className="text-sm font-medium mb-3">Rate this email:</p>
-              <div className="flex gap-3">
-                <Button
-                  onClick={() => handleRating(emailB, 'problem_solution', 'useful')}
-                  disabled={isRating || ratingB !== null}
-                  variant={ratingB ? "secondary" : "outline"}
-                  className="flex-1"
+      <div className="grid lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <Card className="backdrop-blur-sm bg-white/60 border border-blue-200">
+            <CardHeader>
+              <CardTitle className="text-indigo-600">Option B: Problem/Solution</CardTitle>
+              <p className="text-sm text-gray-600">
+                Direct approach - Problem identification and solution presentation
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="bg-white/80 p-4 rounded-lg border min-h-[200px] font-mono text-sm whitespace-pre-wrap">
+                {emailB || "Generating..."}
+              </div>
+              
+              <div className="flex gap-2">
+                <Button 
+                  onClick={() => copyToClipboard(emailB, "Option B")} 
+                  className="flex-1" 
+                  variant="outline"
+                  disabled={!emailB}
                 >
-                  <ThumbsUp className="w-4 h-4 mr-2" />
-                  🔥 Useful
-                </Button>
-                <Button
-                  onClick={() => handleRating(emailB, 'problem_solution', 'needs_work')}
-                  disabled={isRating || ratingB !== null}
-                  variant={ratingB ? "secondary" : "outline"}
-                  className="flex-1"
-                >
-                  <Wrench className="w-4 h-4 mr-2" />
-                  🛠 Needs work
+                  <Copy className="w-4 h-4 mr-2" />
+                  Copy Option B
                 </Button>
               </div>
-              {ratingB && (
-                <p className="text-xs text-green-600 mt-2 text-center">
-                  ✅ Thanks for your feedback!
-                </p>
+
+              {emailB && (
+                <div className="border-t pt-4">
+                  <p className="text-sm font-medium mb-3">Rate this email:</p>
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={() => handleRating(emailB, 'problem_solution', 'useful')}
+                      disabled={isRating || ratingB !== null}
+                      variant={ratingB ? "secondary" : "outline"}
+                      className="flex-1"
+                    >
+                      <ThumbsUp className="w-4 h-4 mr-2" />
+                      🔥 Useful
+                    </Button>
+                    <Button
+                      onClick={() => handleRating(emailB, 'problem_solution', 'needs_work')}
+                      disabled={isRating || ratingB !== null}
+                      variant={ratingB ? "secondary" : "outline"}
+                      className="flex-1"
+                    >
+                      <Wrench className="w-4 h-4 mr-2" />
+                      🛠 Needs work
+                    </Button>
+                  </div>
+                  {ratingB && (
+                    <p className="text-xs text-green-600 mt-2 text-center">
+                      ✅ Thanks for your feedback!
+                    </p>
+                  )}
+                </div>
               )}
-            </div>
+            </CardContent>
+          </Card>
+        </div>
+        
+        {/* Email Analyzer for Option B */}
+        <div className="lg:col-span-1">
+          {emailB && (
+            <EmailAnalyzer 
+              email={emailB} 
+              emailType="B" 
+              isPro={isPro}
+              onUpgrade={handleUpgrade}
+            />
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };
