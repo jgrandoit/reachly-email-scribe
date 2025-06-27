@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,6 +49,8 @@ export const AdminTestSetup = () => {
           data: {
             full_name: account.fullName,
           },
+          // Skip email confirmation for test accounts
+          email_confirm: false
         },
       });
 
@@ -165,7 +166,7 @@ export const AdminTestSetup = () => {
         <CardHeader>
           <CardTitle>Test Account Setup Utility</CardTitle>
           <CardDescription>
-            Create and configure test accounts for different subscription tiers
+            Create and configure test accounts for different subscription tiers (email verification disabled for testing)
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -205,7 +206,7 @@ export const AdminTestSetup = () => {
             </div>
             
             <p className="text-gray-600">
-              This will create user accounts through the authentication system. Each account will be created with the credentials shown above.
+              This will create user accounts through the authentication system with email verification disabled for testing purposes.
             </p>
             
             <Button 
@@ -252,6 +253,7 @@ export const AdminTestSetup = () => {
               <li>• Free tier: 10 emails/month limit</li>
               <li>• Starter tier: 50 emails/month limit</li>
               <li>• Pro tier: Unlimited emails</li>
+              <li>• <strong>Note:</strong> Email verification is disabled for these test accounts</li>
             </ul>
           </div>
         </CardContent>
