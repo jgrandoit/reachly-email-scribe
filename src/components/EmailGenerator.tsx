@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,16 +36,19 @@ const tones = [
   { value: "bold", label: "Bold" }
 ];
 
-// Local storage key for form persistence
+// Local storage keys for persistence
 const FORM_STORAGE_KEY = 'email-generator-form-data';
+const EMAILS_STORAGE_KEY = 'email-generator-emails';
 
-// Form data interface for type safety
+// Extended form data interface to include generated emails
 interface FormData {
   productService: string;
   targetAudience: string;
   selectedIndustry: string;
   selectedTone: string;
   customHook: string;
+  emailA?: string;
+  emailB?: string;
 }
 
 // Helper function to save form data to localStorage
@@ -75,6 +77,35 @@ const clearFormData = () => {
     localStorage.removeItem(FORM_STORAGE_KEY);
   } catch (error) {
     console.error('Failed to clear form data:', error);
+  }
+};
+
+// Helper function to save generated emails separately
+const saveGeneratedEmails = (emailA: string, emailB: string) => {
+  try {
+    localStorage.setItem(EMAILS_STORAGE_KEY, JSON.stringify({ emailA, emailB, timestamp: Date.now() }));
+  } catch (error) {
+    console.error('Failed to save generated emails:', error);
+  }
+};
+
+// Helper function to load generated emails
+const loadGeneratedEmails = () => {
+  try {
+    const stored = localStorage.getItem(EMAILS_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : null;
+  } catch (error) {
+    console.error('Failed to load generated emails:', error);
+    return null;
+  }
+};
+
+// Helper function to clear generated emails
+const clearGeneratedEmails = () => {
+  try {
+    localStorage.removeItem(EMAILS_STORAGE_KEY);
+  } catch (error) {
+    console.error('Failed to clear generated emails:', error);
   }
 };
 
@@ -145,17 +176,30 @@ export const EmailGenerator = () => {
   // Load form data from localStorage on component mount
   useEffect(() => {
     const savedData = loadFormData();
+    const savedEmails = loadGeneratedEmails();
+    
     if (savedData) {
       setProductService(savedData.productService);
       setTargetAudience(savedData.targetAudience);
       setSelectedIndustry(savedData.selectedIndustry);
       setSelectedTone(savedData.selectedTone);
       setCustomHook(savedData.customHook);
+    }
+    
+    if (savedEmails) {
+      setEmailA(savedEmails.emailA || "");
+      setEmailB(savedEmails.emailB || "");
+    }
+    
+    // Show restoration toast if either form data or emails were restored
+    if (savedData || savedEmails) {
+      const restoredItems = [];
+      if (savedData) restoredItems.push("form data");
+      if (savedEmails) restoredItems.push("generated emails");
       
-      // Show a subtle toast to let user know their data was restored
       toast({
-        title: "Form Data Restored",
-        description: "Your previous form data has been restored.",
+        title: "Session Restored",
+        description: `Your previous ${restoredItems.join(" and ")} have been restored.`,
       });
     }
   }, [toast]);
@@ -175,6 +219,13 @@ export const EmailGenerator = () => {
       saveFormData(formData);
     }
   }, [productService, targetAudience, selectedIndustry, selectedTone, customHook]);
+
+  // Save generated emails whenever they change
+  useEffect(() => {
+    if (emailA || emailB) {
+      saveGeneratedEmails(emailA, emailB);
+    }
+  }, [emailA, emailB]);
 
   const handleIndustryChange = (industry: string) => {
     setSelectedIndustry(industry);
@@ -259,7 +310,7 @@ export const EmailGenerator = () => {
         setEmailB(resB.data.result);
         toast({
           title: "Emails Generated!",
-          description: "Two email variations have been created successfully.",
+          description: "Two email variations have been created and saved.",
         });
         // Refresh usage after successful generation
         await refreshUsage();
@@ -289,12 +340,13 @@ export const EmailGenerator = () => {
     setEmailA("");
     setEmailB("");
     
-    // Clear saved form data from localStorage
+    // Clear all saved data from localStorage
     clearFormData();
+    clearGeneratedEmails();
     
     toast({
-      title: "Form Reset",
-      description: "All form data has been cleared.",
+      title: "Session Cleared",
+      description: "All form data and generated emails have been cleared.",
     });
   };
 
@@ -383,7 +435,7 @@ export const EmailGenerator = () => {
                       )}
                       <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
                         <p className="text-xs text-blue-600">
-                          💾 Your form data is automatically saved and will persist across page reloads
+                          💾 Your form data and generated emails persist across page reloads
                         </p>
                       </div>
                     </CardDescription>
@@ -477,12 +529,12 @@ export const EmailGenerator = () => {
                         ) : (
                           <>
                             <Sparkles className="w-4 h-4 mr-2" />
-                            Generate with {getAIModel()}
+                            {emailA || emailB ? 'Regenerate' : 'Generate'} with {getAIModel()}
                           </>
                         )}
                       </Button>
                       <Button variant="outline" onClick={resetForm} className="sm:w-auto w-full">
-                        Reset
+                        Reset Session
                       </Button>
                     </div>
 

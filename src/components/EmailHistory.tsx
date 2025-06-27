@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Copy, Trash2, Mail, Calendar, Sparkles } from "lucide-react";
+import { Copy, Trash2, Mail, Calendar, Sparkles, Edit3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -62,6 +62,44 @@ export const EmailHistory = () => {
       title: "Copied!",
       description: "Email copied to clipboard.",
     });
+  };
+
+  const continueEditing = (email: GeneratedEmail) => {
+    try {
+      // Save the email data to localStorage for the generator to pick up
+      const formData = {
+        productService: email.product_service || "",
+        targetAudience: email.target_audience || "",
+        selectedIndustry: "",
+        selectedTone: email.tone || "professional",
+        customHook: ""
+      };
+      
+      // Save form data
+      localStorage.setItem('email-generator-form-data', JSON.stringify(formData));
+      
+      // Save the email content as generated emails
+      localStorage.setItem('email-generator-emails', JSON.stringify({
+        emailA: email.email_content,
+        emailB: "", // Only one email from history
+        timestamp: Date.now()
+      }));
+      
+      // Navigate to generator (reload to trigger the restoration)
+      window.location.href = '/';
+      
+      toast({
+        title: "Loading Email for Editing",
+        description: "Redirecting to generator with your email loaded...",
+      });
+    } catch (error) {
+      console.error('Error loading email for editing:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load email for editing.",
+        variant: "destructive",
+      });
+    }
   };
 
   const deleteEmail = async (emailId: string) => {
@@ -184,6 +222,14 @@ export const EmailHistory = () => {
                   </div>
                 </div>
                 <div className="flex gap-2 ml-4">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => continueEditing(email)}
+                    title="Continue editing in generator"
+                  >
+                    <Edit3 className="w-3 h-3" />
+                  </Button>
                   <Button
                     size="sm"
                     variant="outline"
