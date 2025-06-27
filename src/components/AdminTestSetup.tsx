@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -72,8 +73,8 @@ export const AdminTestSetup = () => {
     try {
       console.log(`Configuring test data for ${email} with tier ${tier}`);
       
-      // Use direct RPC call since the function isn't in the generated types yet
-      const { data, error } = await supabase.rpc('setup_test_user' as any, {
+      // Use the database function to set up test user data
+      const { data, error } = await supabase.rpc('setup_test_user', {
         p_email: email,
         p_tier: tier
       });
