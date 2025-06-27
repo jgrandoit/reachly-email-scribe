@@ -78,17 +78,30 @@ serve(async (req) => {
     const user = userData.user;
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    // Check if user is Pro
-    const { data: subscriberData } = await supabaseClient
-      .from('subscribers')
-      .select('subscribed, subscription_tier')
-      .eq('user_id', user.id)
-      .single();
+    // Check for test mode in query parameters
+    const url = new URL(req.url);
+    const testMode = url.searchParams.get('test') === 'true';
+    const testTier = url.searchParams.get('tier') || null;
+    
+    let userTier = 'free';
+    
+    if (testMode && testTier) {
+      userTier = testTier;
+      logStep("Test mode detected", { testTier });
+    } else {
+      // Check actual subscription status
+      const { data: subscriberData } = await supabaseClient
+        .from('subscribers')
+        .select('subscribed, subscription_tier')
+        .eq('user_id', user.id)
+        .single();
 
-    const userTier = subscriberData?.subscribed ? 
-      (subscriberData.subscription_tier?.toLowerCase() || 'starter') : 'free';
+      userTier = subscriberData?.subscribed ? 
+        (subscriberData.subscription_tier?.toLowerCase() || 'starter') : 'free';
+    }
     
     if (userTier !== 'pro') {
+      logStep("Pro subscription required", { currentTier: userTier });
       return new Response(JSON.stringify({ 
         error: 'Pro subscription required for email analysis',
         code: 'PRO_REQUIRED',
@@ -105,6 +118,7 @@ serve(async (req) => {
     const openAiKey = Deno.env.get('OPENAI_API_KEY');
     
     if (!openAiKey) {
+      logStep("OpenAI API key missing");
       return new Response(JSON.stringify({ 
         error: 'OpenAI API key not configured',
         code: 'MISSING_API_KEY'
@@ -152,7 +166,7 @@ Scoring criteria:
 
 Focus on practical, actionable feedback that will improve response rates.`;
 
-    logStep('Analyzing email with GPT-4', { emailLength: email_content.length });
+    logStep('Analyzing email with GPT-4o', { emailLength: email_content.length });
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -161,7 +175,7 @@ Focus on practical, actionable feedback that will improve response rates.`;
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'gpt-4o', // Use GPT-4 for Pro users
+        model: 'gpt-4o', // Use GPT-4o for Pro users
         messages: [
           {
             role: 'user',
@@ -175,7 +189,7 @@ Focus on practical, actionable feedback that will improve response rates.`;
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenAI API error:', response.status, errorText);
+      logStep('OpenAI API error', { status: response.status, error: errorText });
       
       if (response.status === 429) {
         return new Response(JSON.stringify({ 
@@ -187,12 +201,14 @@ Focus on practical, actionable feedback that will improve response rates.`;
         });
       }
       
-      throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
+      throw new Error(`OpenAI API error: ${response.status} ${response.statusText} - ${errorText}`);
     }
 
     const data = await response.json();
+    logStep('OpenAI response received', data);
 
     if (!data.choices || !data.choices.length) {
+      logStep('No choices in OpenAI response', data);
       return new Response(JSON.stringify({ 
         error: 'No response from OpenAI API',
         code: 'NO_RESPONSE'
@@ -203,6 +219,7 @@ Focus on practical, actionable feedback that will improve response rates.`;
     }
 
     const aiResponse = data.choices[0].message.content;
+    logStep('AI response content', { content: aiResponse });
     
     try {
       // Parse the JSON response from GPT
@@ -215,26 +232,27 @@ Focus on practical, actionable feedback that will improve response rates.`;
         throw new Error('Invalid analysis format');
       }
 
-      // Store the analysis in the database
-      const { error: insertError } = await supabaseClient
-        .from('email_analysis')
-        .insert({
-          user_id: user.id,
-          email_content: email_content,
-          email_type: email_type || 'unknown',
-          overall_score: analysis.overall_score,
-          tone_score: analysis.tone_score || 0,
-          structure_score: analysis.structure_score || 0,
-          clarity_score: analysis.clarity_score || 0,
-          spam_score: analysis.spam_score || 0,
-          suggestions: analysis.suggestions,
-          strengths: analysis.strengths,
-          red_flags: analysis.red_flags || []
-        });
+      // Store the analysis in the database (if not in test mode)
+      if (!testMode) {
+        const { error: insertError } = await supabaseClient
+          .from('email_analysis')
+          .insert({
+            user_id: user.id,
+            email_content: email_content,
+            email_type: email_type || 'unknown',
+            overall_score: analysis.overall_score,
+            tone_score: analysis.tone_score || 0,
+            structure_score: analysis.structure_score || 0,
+            clarity_score: analysis.clarity_score || 0,
+            spam_score: analysis.spam_score || 0,
+            suggestions: analysis.suggestions,
+            strengths: analysis.strengths,
+            red_flags: analysis.red_flags || []
+          });
 
-      if (insertError) {
-        console.error('Error storing analysis:', insertError);
-        // Don't fail the request if storage fails, but log it
+        if (insertError) {
+          logStep('Error storing analysis', insertError);
+        }
       }
       
       logStep('Email analysis completed successfully', { 
@@ -250,11 +268,12 @@ Focus on practical, actionable feedback that will improve response rates.`;
       });
 
     } catch (parseError) {
-      console.error('Error parsing AI response:', parseError, 'Raw response:', aiResponse);
+      logStep('Error parsing AI response', { error: parseError.message, response: aiResponse });
       
       return new Response(JSON.stringify({ 
         error: 'Failed to parse analysis results',
-        code: 'PARSE_ERROR'
+        code: 'PARSE_ERROR',
+        raw_response: aiResponse
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -262,7 +281,7 @@ Focus on practical, actionable feedback that will improve response rates.`;
     }
 
   } catch (err) {
-    console.error('Email analysis error:', err);
+    logStep('Email analysis error', err);
     
     if (err.message.includes('API key')) {
       return new Response(JSON.stringify({ 

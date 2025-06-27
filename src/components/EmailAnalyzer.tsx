@@ -8,6 +8,7 @@ import { Crown, TrendingUp, AlertTriangle, CheckCircle, Lightbulb, Loader2 } fro
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useTestMode } from "@/hooks/useTestMode";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface EmailAnalyzerProps {
@@ -33,6 +34,10 @@ export const EmailAnalyzer = ({ email, emailType, isPro, onUpgrade }: EmailAnaly
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { isTestMode, testTier } = useTestMode();
+
+  // In test mode, override isPro based on test tier
+  const effectiveIsPro = isTestMode ? (testTier === 'pro') : isPro;
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return "text-green-600";
@@ -47,7 +52,7 @@ export const EmailAnalyzer = ({ email, emailType, isPro, onUpgrade }: EmailAnaly
   };
 
   const handleAnalyze = async () => {
-    if (!isPro) {
+    if (!effectiveIsPro) {
       toast({
         title: "Pro Feature",
         description: "Email analysis is available for Pro users. Upgrade to unlock detailed scoring and AI suggestions!",
@@ -71,7 +76,13 @@ export const EmailAnalyzer = ({ email, emailType, isPro, onUpgrade }: EmailAnaly
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
-      const response = await supabase.functions.invoke('analyze-email', {
+      // Build URL with test mode parameters if active
+      let functionUrl = 'analyze-email';
+      if (isTestMode && testTier) {
+        functionUrl += `?test=true&tier=${testTier}`;
+      }
+      
+      const response = await supabase.functions.invoke(functionUrl, {
         body: { 
           email_content: email,
           email_type: emailType 
@@ -79,7 +90,10 @@ export const EmailAnalyzer = ({ email, emailType, isPro, onUpgrade }: EmailAnaly
         headers: { Authorization: `Bearer ${session?.access_token}` },
       });
 
+      console.log('Analysis response:', response);
+
       if (response.error) {
+        console.error('Analysis error:', response.error);
         throw new Error(response.error.message || 'Analysis failed');
       }
 
@@ -90,13 +104,14 @@ export const EmailAnalyzer = ({ email, emailType, isPro, onUpgrade }: EmailAnaly
           description: `Email ${emailType} scored ${response.data.analysis.overall_score}/100`,
         });
       } else {
+        console.error('No analysis data:', response.data);
         throw new Error("No analysis data received");
       }
     } catch (err: any) {
       console.error("Analysis error:", err);
       toast({
         title: "Analysis Failed",
-        description: "Unable to analyze the email. Please try again.",
+        description: err.message || "Unable to analyze the email. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -104,13 +119,18 @@ export const EmailAnalyzer = ({ email, emailType, isPro, onUpgrade }: EmailAnaly
     }
   };
 
-  if (!isPro) {
+  if (!effectiveIsPro) {
     return (
       <Card className="border-yellow-200 bg-gradient-to-br from-yellow-50 to-orange-50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-yellow-700">
             <Crown className="w-5 h-5" />
             AI Email Analyzer - Pro Feature
+            {isTestMode && (
+              <Badge variant="secondary" className="ml-2">
+                Test Mode: {testTier?.toUpperCase()}
+              </Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -156,7 +176,14 @@ export const EmailAnalyzer = ({ email, emailType, isPro, onUpgrade }: EmailAnaly
             <TrendingUp className="w-5 h-5" />
             AI Email Analysis - Option {emailType}
           </span>
-          <Crown className="w-5 h-5 text-yellow-500" />
+          <div className="flex items-center gap-2">
+            <Crown className="w-5 h-5 text-yellow-500" />
+            {isTestMode && (
+              <Badge variant="secondary">
+                Test: {testTier?.toUpperCase()}
+              </Badge>
+            )}
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -169,7 +196,7 @@ export const EmailAnalyzer = ({ email, emailType, isPro, onUpgrade }: EmailAnaly
             {isAnalyzing ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Analyzing with GPT-4...
+                Analyzing with GPT-4o...
               </>
             ) : (
               <>
