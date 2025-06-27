@@ -1,10 +1,24 @@
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+// Helper logging function
+const logStep = (step: string, details?: any) => {
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  console.log(`[GENERATE-EMAIL] ${step}${detailsStr}`);
+};
+
+// Define usage limits per tier
+const USAGE_LIMITS = {
+  free: 10,
+  starter: 50,
+  pro: -1 // unlimited
 };
 
 serve(async (req) => {
@@ -20,12 +34,77 @@ serve(async (req) => {
     });
   }
 
+  // Create Supabase client with service role for database operations
+  const supabaseClient = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    { auth: { persistSession: false } }
+  );
+
   try {
+    logStep("Function started");
+    
     const { product, audience, tone } = await req.json();
 
     if (!product || !audience || !tone) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {
         status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Get user from auth header
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Authentication required' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+    if (userError || !userData.user) {
+      logStep("Authentication failed", { error: userError?.message });
+      return new Response(JSON.stringify({ error: 'Invalid authentication' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const user = userData.user;
+    logStep("User authenticated", { userId: user.id, email: user.email });
+
+    // Get user's subscription status
+    const { data: subscriberData } = await supabaseClient
+      .from('subscribers')
+      .select('subscribed, subscription_tier')
+      .eq('user_id', user.id)
+      .single();
+
+    const userTier = subscriberData?.subscribed ? 
+      (subscriberData.subscription_tier?.toLowerCase() || 'starter') : 'free';
+    logStep("User tier determined", { tier: userTier });
+
+    // Get current usage
+    const { data: currentUsage } = await supabaseClient
+      .rpc('get_user_monthly_usage', { p_user_id: user.id });
+
+    const usageCount = currentUsage || 0;
+    const limit = USAGE_LIMITS[userTier as keyof typeof USAGE_LIMITS];
+    
+    logStep("Usage check", { current: usageCount, limit, tier: userTier });
+
+    // Check if user has exceeded their limit
+    if (limit !== -1 && usageCount >= limit) {
+      return new Response(JSON.stringify({ 
+        error: 'Monthly usage limit exceeded',
+        code: 'USAGE_LIMIT_EXCEEDED',
+        current_usage: usageCount,
+        limit: limit,
+        tier: userTier
+      }), {
+        status: 429,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -43,7 +122,7 @@ serve(async (req) => {
       });
     }
 
-    // Construct a detailed prompt for better email generation
+    // Enhanced prompt construction based on tier
     const systemPrompt = `You are an expert cold email copywriter. Your task is to write compelling, personalized cold emails that get responses. Focus on:
     1. Creating attention-grabbing subject lines
     2. Opening with relevance to the recipient
@@ -56,7 +135,9 @@ serve(async (req) => {
     - Email body
     - Clear call to action`;
 
-    const userPrompt = `Write 2 short cold email variants in a ${tone} tone promoting this product/service: "${product}" 
+    const variantCount = userTier === 'free' ? 2 : userTier === 'starter' ? 3 : 5;
+    
+    const userPrompt = `Write ${variantCount} short cold email variants in a ${tone} tone promoting this product/service: "${product}" 
     
     Target audience: "${audience}"
     
@@ -68,7 +149,7 @@ serve(async (req) => {
     - Make each email distinct in approach
     - Keep each email under 150 words`;
 
-    console.log('Generating email with OpenAI...');
+    logStep('Generating email with OpenAI', { variants: variantCount });
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -89,7 +170,7 @@ serve(async (req) => {
           }
         ],
         temperature: 0.7,
-        max_tokens: 800
+        max_tokens: 800 + (variantCount * 100) // More tokens for more variants
       })
     });
 
@@ -110,12 +191,27 @@ serve(async (req) => {
 
     const aiText = data.choices[0].message.content;
     
+    // Increment user usage
+    await supabaseClient.rpc('increment_user_usage', { p_user_id: user.id });
+    logStep('Usage incremented', { newUsage: usageCount + 1 });
+    
     // Log successful generation for debugging
-    console.log('Email generated successfully for:', { product: product.substring(0, 50), audience, tone });
+    logStep('Email generated successfully', { 
+      product: product.substring(0, 50), 
+      audience, 
+      tone, 
+      variants: variantCount,
+      usage: usageCount + 1
+    });
     
     return new Response(JSON.stringify({ 
       result: aiText,
-      usage: data.usage // Include token usage for monitoring
+      usage: data.usage,
+      user_usage: {
+        current: usageCount + 1,
+        limit: limit,
+        tier: userTier
+      }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -5,11 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Copy, Sparkles, ArrowLeft, RefreshCw, HelpCircle } from "lucide-react";
+import { Copy, Sparkles, ArrowLeft, RefreshCw, HelpCircle, AlertTriangle, Crown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useUsage } from "@/hooks/useUsage";
+import { useSubscription } from "@/hooks/useSubscription";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 
 const industryPrompts = [
@@ -54,6 +59,8 @@ export const EmailGenerator = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { usage, loading: usageLoading, refreshUsage } = useUsage();
+  const { createCheckout } = useSubscription();
 
   const handleIndustryChange = (industry: string) => {
     setSelectedIndustry(industry);
@@ -63,7 +70,20 @@ export const EmailGenerator = () => {
     }
   };
 
+  const handleUpgrade = async () => {
+    await createCheckout("starter");
+  };
+
   const handleGenerate = async () => {
+    if (!usage.canGenerate) {
+      toast({
+        title: "Usage Limit Reached",
+        description: `You've reached your monthly limit of ${usage.limit} emails. Upgrade to generate more!`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!productService || !targetAudience || !tone) {
       toast({
         title: "Missing Information",
@@ -91,6 +111,14 @@ export const EmailGenerator = () => {
       });
 
       if (res.error) {
+        if (res.error.code === 'USAGE_LIMIT_EXCEEDED') {
+          toast({
+            title: "Usage Limit Exceeded",
+            description: `You've used all ${usage.limit} emails for this month. Upgrade to generate more!`,
+            variant: "destructive",
+          });
+          return;
+        }
         throw new Error(res.error.message || 'Failed to generate email');
       }
 
@@ -100,6 +128,8 @@ export const EmailGenerator = () => {
           title: "Email Generated!",
           description: "Your cold email has been created successfully.",
         });
+        // Refresh usage after successful generation
+        await refreshUsage();
       } else {
         throw new Error("No response from API");
       }
@@ -159,6 +189,38 @@ export const EmailGenerator = () => {
               <p className="text-xl text-gray-600 mb-2">
                 Welcome back, {user?.email}! Generate personalized cold emails in seconds.
               </p>
+              
+              {/* Usage Display */}
+              {!usageLoading && (
+                <div className="mt-6 max-w-md mx-auto">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-gray-600">
+                      Monthly Usage ({usage.tier})
+                    </span>
+                    <span className="text-sm font-medium">
+                      {usage.current} / {usage.limit === -1 ? '∞' : usage.limit}
+                    </span>
+                  </div>
+                  {usage.limit !== -1 && (
+                    <Progress value={usage.percentage} className="h-2 mb-2" />
+                  )}
+                  {usage.percentage > 80 && usage.limit !== -1 && (
+                    <Alert className="mt-4">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertDescription>
+                        You're running low on emails. 
+                        <Button 
+                          variant="link" 
+                          className="p-0 ml-1 h-auto text-blue-600"
+                          onClick={handleUpgrade}
+                        >
+                          Upgrade now
+                        </Button>
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="grid lg:grid-cols-2 gap-8">
@@ -168,6 +230,9 @@ export const EmailGenerator = () => {
                   <CardTitle className="flex items-center gap-2">
                     <Sparkles className="w-5 h-5 text-blue-600" />
                     Email Details
+                    {usage.tier !== 'free' && (
+                      <Crown className="w-4 h-4 text-yellow-500" />
+                    )}
                   </CardTitle>
                   <CardDescription>
                     Provide details about your product/service and target audience
@@ -247,13 +312,18 @@ export const EmailGenerator = () => {
                   <div className="flex gap-3">
                     <Button
                       onClick={handleGenerate}
-                      disabled={isGenerating}
+                      disabled={isGenerating || !usage.canGenerate}
                       className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
                     >
                       {isGenerating ? (
                         <>
                           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
                           Generating...
+                        </>
+                      ) : !usage.canGenerate ? (
+                        <>
+                          <AlertTriangle className="w-4 h-4 mr-2" />
+                          Limit Reached
                         </>
                       ) : (
                         <>
@@ -266,6 +336,22 @@ export const EmailGenerator = () => {
                       Reset
                     </Button>
                   </div>
+
+                  {!usage.canGenerate && (
+                    <Alert>
+                      <Crown className="h-4 w-4" />
+                      <AlertDescription>
+                        You've reached your monthly limit. 
+                        <Button 
+                          variant="link" 
+                          className="p-0 ml-1 h-auto"
+                          onClick={handleUpgrade}
+                        >
+                          Upgrade to generate more emails
+                        </Button>
+                      </AlertDescription>
+                    </Alert>
+                  )}
                 </CardContent>
               </Card>
 
@@ -275,6 +361,11 @@ export const EmailGenerator = () => {
                   <CardTitle>Your Generated Email</CardTitle>
                   <CardDescription>
                     {generatedEmail ? "Copy and customize as needed" : "Your email will appear here"}
+                    {usage.tier !== 'free' && (
+                      <span className="ml-2 text-yellow-600 text-sm">
+                        ({usage.tier === 'starter' ? '3' : '5'} variants included)
+                      </span>
+                    )}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -295,7 +386,11 @@ export const EmailGenerator = () => {
                           <Copy className="w-4 h-4 mr-2" />
                           Copy to Clipboard
                         </Button>
-                        <Button onClick={regenerateEmail} variant="outline">
+                        <Button 
+                          onClick={regenerateEmail} 
+                          variant="outline"
+                          disabled={!usage.canGenerate}
+                        >
                           <RefreshCw className="w-4 h-4 mr-2" />
                           Regenerate
                         </Button>

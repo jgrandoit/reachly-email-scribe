@@ -69,7 +69,8 @@ export const Pricing = ({ onGetStarted }: PricingProps) => {
           features={[
             "10 emails per month",
             "2 email variants per generation",
-            "3 tone options",
+            "4 tone options",
+            "Industry templates",
             "Basic support",
           ]}
           buttonLabel={isCurrentPlan("free") ? "Current Plan" : "Get Started Free"}
@@ -88,7 +89,8 @@ export const Pricing = ({ onGetStarted }: PricingProps) => {
             "50 emails per month",
             "3 email variants per generation",
             "All tone options",
-            "Email templates",
+            "Industry templates",
+            "Priority support",
           ]}
           buttonLabel={isCurrentPlan("starter") ? "Current Plan" : "Choose Starter"}
           onClick={() => handlePlanSelect("starter")}
@@ -106,6 +108,7 @@ export const Pricing = ({ onGetStarted }: PricingProps) => {
             "Unlimited emails",
             "5 email variants per generation",
             "All tone options",
+            "Industry templates",
             "Priority support",
             "Advanced AI features",
           ]}
