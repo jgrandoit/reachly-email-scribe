@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,6 +35,56 @@ const tones = [
   { value: "friendly", label: "Friendly" },
   { value: "bold", label: "Bold" }
 ];
+
+// Helper function to get user-friendly error messages
+const getErrorMessage = (error: any) => {
+  if (error.code === 'USAGE_LIMIT_EXCEEDED') {
+    return {
+      title: "Usage Limit Exceeded",
+      description: "You've reached your monthly email generation limit. Please upgrade to continue.",
+      variant: "destructive" as const
+    };
+  }
+  
+  if (error.code === 'MISSING_API_KEY') {
+    return {
+      title: "Service Configuration Issue",
+      description: "Our email generation service is temporarily unavailable. Please try again later.",
+      variant: "destructive" as const
+    };
+  }
+  
+  if (error.message?.includes('quota') || error.message?.includes('rate limit')) {
+    return {
+      title: "Server is Busy",
+      description: "Our servers are experiencing high demand. Please try again in a few minutes.",
+      variant: "destructive" as const
+    };
+  }
+  
+  if (error.message?.includes('API key') || error.message?.includes('Invalid authentication')) {
+    return {
+      title: "Service Temporarily Unavailable",
+      description: "We're experiencing technical difficulties. Please try again later.",
+      variant: "destructive" as const
+    };
+  }
+  
+  if (error.message?.includes('network') || error.message?.includes('fetch')) {
+    return {
+      title: "Connection Issue",
+      description: "Please check your internet connection and try again.",
+      variant: "destructive" as const
+    };
+  }
+  
+  // Generic fallback for any other errors
+  return {
+    title: "Server is Busy",
+    description: "We're experiencing high demand right now. Please try again in a few moments.",
+    variant: "destructive" as const
+  };
+};
 
 export const EmailGenerator = () => {
   const [productService, setProductService] = useState("");
@@ -116,21 +165,17 @@ export const EmailGenerator = () => {
         })
       ]);
 
+      // Handle errors from either response
       if (resA.error || resB.error) {
         const error = resA.error || resB.error;
-        if (error.code === 'USAGE_LIMIT_EXCEEDED') {
-          const limitMessage = usage.tier === 'free' 
-            ? `You've reached your free plan limit of ${usage.limit} emails this month. Upgrade to continue!`
-            : `You've used all ${usage.limit} emails for this month. Upgrade to generate more!`;
-          
-          toast({
-            title: "Usage Limit Exceeded",
-            description: limitMessage,
-            variant: "destructive",
-          });
-          return;
-        }
-        throw new Error(error.message || 'Failed to generate emails');
+        const errorMessage = getErrorMessage(error);
+        
+        toast({
+          title: errorMessage.title,
+          description: errorMessage.description,
+          variant: errorMessage.variant,
+        });
+        return;
       }
 
       if (resA.data?.result && resB.data?.result) {
@@ -147,10 +192,12 @@ export const EmailGenerator = () => {
       }
     } catch (err: any) {
       console.error("Generation error:", err);
+      const errorMessage = getErrorMessage(err);
+      
       toast({
-        title: "Generation Failed",
-        description: err.message || "Failed to generate emails. Please try again.",
-        variant: "destructive",
+        title: errorMessage.title,
+        description: errorMessage.description,
+        variant: errorMessage.variant,
       });
     } finally {
       setIsGenerating(false);

@@ -49,7 +49,10 @@ serve(async (req) => {
 
     // Support both new prompt-based system and legacy system
     if (!prompt && (!product || !audience || !tone)) {
-      return new Response(JSON.stringify({ error: 'Missing required fields' }), {
+      return new Response(JSON.stringify({ 
+        error: 'Missing required fields',
+        code: 'MISSING_FIELDS'
+      }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -58,7 +61,10 @@ serve(async (req) => {
     // Get user from auth header
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Authentication required' }), {
+      return new Response(JSON.stringify({ 
+        error: 'Authentication required',
+        code: 'AUTHENTICATION_REQUIRED'
+      }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -68,7 +74,10 @@ serve(async (req) => {
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
     if (userError || !userData.user) {
       logStep("Authentication failed", { error: userError?.message });
-      return new Response(JSON.stringify({ error: 'Invalid authentication' }), {
+      return new Response(JSON.stringify({ 
+        error: 'Invalid authentication',
+        code: 'INVALID_AUTHENTICATION'
+      }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -168,13 +177,48 @@ Requirements:
     if (!response.ok) {
       const errorText = await response.text();
       console.error('OpenAI API error:', response.status, errorText);
+      
+      // Provide specific error codes based on OpenAI response
+      if (response.status === 429) {
+        return new Response(JSON.stringify({ 
+          error: 'OpenAI API rate limit exceeded',
+          code: 'RATE_LIMIT_EXCEEDED'
+        }), {
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      
+      if (response.status === 401) {
+        return new Response(JSON.stringify({ 
+          error: 'Invalid OpenAI API key',
+          code: 'INVALID_API_KEY'
+        }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      
+      if (response.status === 403) {
+        return new Response(JSON.stringify({ 
+          error: 'OpenAI API quota exceeded',
+          code: 'QUOTA_EXCEEDED'
+        }), {
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      
       throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json();
 
     if (!data.choices || !data.choices.length) {
-      return new Response(JSON.stringify({ error: 'No response from OpenAI API' }), {
+      return new Response(JSON.stringify({ 
+        error: 'No response from OpenAI API',
+        code: 'NO_RESPONSE'
+      }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -231,23 +275,40 @@ Requirements:
   } catch (err) {
     console.error('OpenAI API error:', err);
     
-    // Provide more specific error messages
+    // Provide specific error codes for different error types
     if (err.message.includes('API key')) {
-      return new Response(JSON.stringify({ error: 'Invalid OpenAI API key' }), {
-        status: 401,
+      return new Response(JSON.stringify({ 
+        error: 'Invalid OpenAI API key',
+        code: 'INVALID_API_KEY'
+      }), {
+        status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
     
-    if (err.message.includes('quota')) {
-      return new Response(JSON.stringify({ error: 'OpenAI API quota exceeded' }), {
+    if (err.message.includes('quota') || err.message.includes('rate limit')) {
+      return new Response(JSON.stringify({ 
+        error: 'OpenAI API quota exceeded',
+        code: 'QUOTA_EXCEEDED'
+      }), {
         status: 429,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    if (err.message.includes('network') || err.message.includes('fetch')) {
+      return new Response(JSON.stringify({ 
+        error: 'Network connectivity issue',
+        code: 'NETWORK_ERROR'
+      }), {
+        status: 503,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
     
     return new Response(JSON.stringify({ 
       error: 'Failed to generate email. Please try again.',
+      code: 'GENERATION_ERROR',
       details: err.message
     }), {
       status: 500,
