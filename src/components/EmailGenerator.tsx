@@ -98,7 +98,7 @@ export const EmailGenerator = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const { usage, loading: usageLoading, refreshUsage } = useUsage();
-  const { createCheckout } = useSubscription();
+  const { subscribed, subscription_tier, createCheckout } = useSubscription();
 
   const handleIndustryChange = (industry: string) => {
     setSelectedIndustry(industry);
@@ -226,6 +226,18 @@ export const EmailGenerator = () => {
     handleGenerate();
   };
 
+  // Get AI model based on user tier
+  const getAIModel = () => {
+    const userTier = subscribed ? (subscription_tier?.toLowerCase() || 'starter') : 'free';
+    if (userTier === 'pro') return 'GPT-4';
+    return 'GPT-4o-mini';
+  };
+
+  const getModelBadgeColor = () => {
+    const model = getAIModel();
+    return model === 'GPT-4' ? 'bg-gradient-to-r from-yellow-500 to-orange-500' : 'bg-gray-500';
+  };
+
   return (
     <TooltipProvider>
       <ProtectedRoute>
@@ -242,6 +254,15 @@ export const EmailGenerator = () => {
               <p className="text-lg md:text-xl text-gray-600 mb-2">
                 Welcome back, {user?.email}! Generate two unique cold email variations with different approaches.
               </p>
+              
+              {/* AI Model Badge */}
+              <div className="flex justify-center mb-4">
+                <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-white text-sm font-medium ${getModelBadgeColor()}`}>
+                  <Bot className="w-4 h-4" />
+                  Powered by {getAIModel()}
+                  {getAIModel() === 'GPT-4' && <Crown className="w-4 h-4" />}
+                </div>
+              </div>
               
               {/* Usage Indicator */}
               {!usageLoading && (
@@ -267,6 +288,14 @@ export const EmailGenerator = () => {
                         <span className="block mt-2 text-sm text-orange-600">
                           Free plan: {usage.current}/{usage.limit} emails used this month
                         </span>
+                      )}
+                      {usage.tier !== 'pro' && (
+                        <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-md">
+                          <p className="text-sm text-yellow-700">
+                            <Crown className="w-4 h-4 inline mr-1" />
+                            Upgrade to Pro for GPT-4 powered emails with superior writing quality
+                          </p>
+                        </div>
                       )}
                     </CardDescription>
                   </CardHeader>
@@ -349,7 +378,7 @@ export const EmailGenerator = () => {
                         {isGenerating ? (
                           <>
                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                            Generating...
+                            Generating with {getAIModel()}...
                           </>
                         ) : !usage.canGenerate ? (
                           <>
@@ -359,7 +388,7 @@ export const EmailGenerator = () => {
                         ) : (
                           <>
                             <Sparkles className="w-4 h-4 mr-2" />
-                            Generate 2 Emails
+                            Generate with {getAIModel()}
                           </>
                         )}
                       </Button>
@@ -399,6 +428,26 @@ export const EmailGenerator = () => {
                         </AlertDescription>
                       </Alert>
                     )}
+
+                    {/* Pro Upgrade Promotion */}
+                    {usage.tier !== 'pro' && (
+                      <Alert className="border-yellow-200 bg-yellow-50">
+                        <Crown className="h-4 w-4 text-yellow-600" />
+                        <AlertDescription className="text-yellow-800">
+                          <div className="font-medium mb-1">Want superior email quality?</div>
+                          <div className="text-sm">
+                            Pro users get access to GPT-4, our most advanced AI model for sharper, more persuasive writing.{' '}
+                            <Button 
+                              variant="link" 
+                              className="p-0 ml-1 h-auto text-yellow-700 font-medium"
+                              onClick={() => createCheckout('pro')}
+                            >
+                              Upgrade to Pro ($29/month)
+                            </Button>
+                          </div>
+                        </AlertDescription>
+                      </Alert>
+                    )}
                   </CardContent>
                 </Card>
               </div>
@@ -414,7 +463,9 @@ export const EmailGenerator = () => {
                       <div className="bg-gray-50/80 p-8 rounded-lg border min-h-[400px] flex items-center justify-center">
                         <div className="text-center">
                           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
-                          <p className="text-gray-600 font-medium">Generating two unique email variations...</p>
+                          <p className="text-gray-600 font-medium">
+                            Generating two unique email variations with {getAIModel()}...
+                          </p>
                           <p className="text-sm text-gray-500 mt-2">This may take a moment</p>
                         </div>
                       </div>

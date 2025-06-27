@@ -1,5 +1,5 @@
 
-import { Mail, Users, TrendingUp, Star, Headphones, Crown } from "lucide-react";
+import { Mail, Users, TrendingUp, Star, Headphones, Crown, Zap } from "lucide-react";
 
 export const pricingPlans = [
   {
@@ -13,6 +13,7 @@ export const pricingPlans = [
       { icon: TrendingUp, text: "4 tone options (Friendly, Professional, Direct, Casual)" },
       { icon: Star, text: "Industry templates" },
       { icon: Headphones, text: "Basic support" },
+      { icon: Zap, text: "GPT-4o-mini AI model", note: "standard quality" },
     ],
     buttonVariant: "outline" as const,
   },
@@ -27,6 +28,7 @@ export const pricingPlans = [
       { icon: TrendingUp, text: "All tone options" },
       { icon: Star, text: "Industry templates" },
       { icon: Headphones, text: "Priority support" },
+      { icon: Zap, text: "GPT-4o-mini AI model", note: "standard quality" },
     ],
     buttonVariant: "primary" as const,
   },
@@ -42,6 +44,7 @@ export const pricingPlans = [
       { icon: Star, text: "Industry templates" },
       { icon: Headphones, text: "Priority support" },
       { icon: Crown, text: "Advanced AI features" },
+      { icon: Zap, text: "GPT-4 AI model", note: "premium quality", highlight: true },
     ],
     highlight: true,
     mostPopular: true,

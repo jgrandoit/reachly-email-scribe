@@ -21,6 +21,13 @@ const USAGE_LIMITS = {
   pro: -1 // unlimited
 };
 
+// Define AI models per tier
+const AI_MODELS = {
+  free: 'gpt-4o-mini',
+  starter: 'gpt-4o-mini',
+  pro: 'gpt-4o' // Pro users get the premium model
+};
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -133,6 +140,10 @@ serve(async (req) => {
       });
     }
 
+    // Select AI model based on user tier
+    const aiModel = AI_MODELS[userTier as keyof typeof AI_MODELS];
+    logStep('AI model selected', { tier: userTier, model: aiModel });
+
     // Use the provided prompt or generate a legacy one
     let finalPrompt = prompt;
     if (!prompt) {
@@ -153,7 +164,7 @@ Requirements:
 - Keep each email under 150 words`;
     }
 
-    logStep('Generating email with OpenAI', { promptLength: finalPrompt.length });
+    logStep('Generating email with OpenAI', { promptLength: finalPrompt.length, model: aiModel });
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -162,7 +173,7 @@ Requirements:
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: aiModel,
         messages: [
           {
             role: 'user',
@@ -170,7 +181,7 @@ Requirements:
           }
         ],
         temperature: 0.7,
-        max_tokens: 1200
+        max_tokens: aiModel === 'gpt-4o' ? 1500 : 1200 // Pro users get more tokens
       })
     });
 
@@ -257,12 +268,14 @@ Requirements:
     // Log successful generation for debugging
     logStep('Email generated successfully', { 
       promptType: prompt ? 'framework-based' : 'legacy',
-      usage: usageCount + 1
+      usage: usageCount + 1,
+      model: aiModel
     });
     
     return new Response(JSON.stringify({ 
       result: aiText,
       usage: data.usage,
+      model_used: aiModel,
       user_usage: {
         current: usageCount + 1,
         limit: limit,
