@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Mail, User, LogOut } from "lucide-react";
+import { Mail, User, LogOut, Home, BarChart3 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import {
   DropdownMenu,
@@ -13,9 +13,11 @@ import {
 
 interface HeaderProps {
   onGetStarted: () => void;
+  onBackToHome?: () => void;
+  currentView?: string;
 }
 
-export const Header = ({ onGetStarted }: HeaderProps) => {
+export const Header = ({ onGetStarted, onBackToHome, currentView }: HeaderProps) => {
   const { user, signOut } = useAuth();
 
   return (
@@ -31,41 +33,60 @@ export const Header = ({ onGetStarted }: HeaderProps) => {
         </div>
         
         <nav className="hidden md:flex items-center space-x-8">
-          <a href="#features" className="text-gray-600 hover:text-gray-900 transition-colors">
-            Features
-          </a>
-          <a href="#pricing" className="text-gray-600 hover:text-gray-900 transition-colors">
-            Pricing
-          </a>
-          
           {user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="text-gray-600 hover:text-gray-900">
-                  <User className="w-4 h-4 mr-2" />
-                  {user.email}
+            <>
+              {currentView !== "dashboard" && (
+                <Button
+                  variant="ghost"
+                  onClick={onBackToHome}
+                  className="text-gray-600 hover:text-gray-900"
+                >
+                  <Home className="w-4 h-4 mr-2" />
+                  Dashboard
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={signOut}>
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Sign out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              )}
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="text-gray-600 hover:text-gray-900">
+                    <User className="w-4 h-4 mr-2" />
+                    Welcome, {user.email?.split('@')[0]}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => onBackToHome?.()}>
+                    <BarChart3 className="w-4 h-4 mr-2" />
+                    Dashboard
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={signOut}>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
           ) : (
-            <Button variant="ghost" className="text-gray-600 hover:text-gray-900" asChild>
-              <a href="/auth">
-                <User className="w-4 h-4 mr-2" />
-                Sign In
+            <>
+              <a href="#features" className="text-gray-600 hover:text-gray-900 transition-colors">
+                Features
               </a>
-            </Button>
+              <a href="#pricing" className="text-gray-600 hover:text-gray-900 transition-colors">
+                Pricing
+              </a>
+              <Button variant="ghost" className="text-gray-600 hover:text-gray-900" asChild>
+                <a href="/auth">
+                  <User className="w-4 h-4 mr-2" />
+                  Sign In
+                </a>
+              </Button>
+            </>
           )}
           
           <Button onClick={onGetStarted} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
-            Get Started
+            {user ? "Generate Email" : "Get Started"}
           </Button>
         </nav>
       </div>
