@@ -44,6 +44,10 @@ export const EmailGenerator = () => {
         }),
       });
 
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
       const data = await res.json();
 
       if (data?.result) {
@@ -53,34 +57,14 @@ export const EmailGenerator = () => {
           description: "Your cold email has been created successfully.",
         });
       } else {
-        throw new Error(data?.error || "No response");
+        throw new Error(data?.error || "No response from API");
       }
     } catch (err: any) {
       console.error("Generation error:", err);
-      
-      // Fallback to mock email generation for demo purposes
-      const mockEmail = `Subject: Transform Your ${targetAudience} Strategy Today
-
-Hi [Name],
-
-I hope this email finds you well. I'm reaching out because I noticed you're in the ${targetAudience} space, and I believe our ${productService} could significantly impact your results.
-
-Here's what makes us different:
-• Proven track record with companies like yours
-• ${tone === "professional" ? "Enterprise-grade" : tone === "friendly" ? "User-friendly" : "Cutting-edge"} solution
-• Immediate ROI within the first month
-
-Would you be open to a quick 15-minute call this week to explore how we can help you achieve [specific goal]?
-
-Best regards,
-[Your Name]
-
-P.S. I'd love to share a case study of how we helped [similar company] achieve [specific result].`;
-
-      setGeneratedEmail(mockEmail);
       toast({
-        title: "Email Generated!",
-        description: "Your cold email has been created successfully.",
+        title: "Generation Failed",
+        description: "Failed to generate email. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setIsGenerating(false);
