@@ -51,6 +51,7 @@ const Index = () => {
   }, [user, currentView]);
 
   const handleGetStarted = () => {
+    console.log("Get Started clicked, user:", !!user);
     if (user) {
       setCurrentView("generator");
     } else {
@@ -60,8 +61,13 @@ const Index = () => {
   };
 
   const handleBackToHome = () => {
-    setCurrentView(user ? "dashboard" : "home");
+    console.log("Back to home clicked, user:", !!user, "current view:", currentView);
+    const newView = user ? "dashboard" : "home";
+    console.log("Setting view to:", newView);
+    setCurrentView(newView);
   };
+
+  console.log("Current view:", currentView, "User logged in:", !!user);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
