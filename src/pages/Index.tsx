@@ -12,11 +12,15 @@ import { Pricing } from "@/components/Pricing";
 import { AnalyticsDashboard } from "@/components/AnalyticsDashboard";
 import { trackAuth } from "@/utils/analytics";
 
+const ADMIN_EMAIL = "blessup127@gmail.com";
+
 const Index = () => {
   const [currentView, setCurrentView] = useState<"home" | "dashboard" | "generator" | "analytics">("home");
   const { toast } = useToast();
   const { checkSubscription } = useSubscription();
   const { user, loading } = useAuth();
+
+  const isAdmin = user?.email === ADMIN_EMAIL;
 
   useEffect(() => {
     // Check for success/canceled query params from Stripe
@@ -60,6 +64,18 @@ const Index = () => {
     } else {
       // Redirect to auth page for non-logged in users
       window.location.href = "/auth";
+    }
+  };
+
+  const handleViewAnalytics = () => {
+    if (isAdmin) {
+      setCurrentView("analytics");
+    } else {
+      toast({
+        title: "Access Denied",
+        description: "You don't have permission to view analytics.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -112,13 +128,13 @@ const Index = () => {
       {currentView === "dashboard" && user && (
         <Dashboard 
           onStartGenerator={() => setCurrentView("generator")}
-          onViewAnalytics={() => setCurrentView("analytics")}
+          onViewAnalytics={handleViewAnalytics}
         />
       )}
 
       {currentView === "generator" && <EmailGenerator />}
 
-      {currentView === "analytics" && user && (
+      {currentView === "analytics" && user && isAdmin && (
         <div className="container mx-auto px-4 py-8">
           <AnalyticsDashboard />
         </div>

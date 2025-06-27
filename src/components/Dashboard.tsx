@@ -25,10 +25,14 @@ interface GeneratedEmail {
   created_at: string;
 }
 
+const ADMIN_EMAIL = "blessup127@gmail.com";
+
 export const Dashboard = ({ onStartGenerator, onViewAnalytics }: DashboardProps) => {
   const { user } = useAuth();
   const { usage, loading: usageLoading } = useUsage();
   const { subscribed, subscription_tier, createCheckout } = useSubscription();
+
+  const isAdmin = user?.email === ADMIN_EMAIL;
 
   const handleUpgrade = async () => {
     await createCheckout("starter");
@@ -77,14 +81,16 @@ export const Dashboard = ({ onStartGenerator, onViewAnalytics }: DashboardProps)
                 {usage.canGenerate ? 'Create New Email' : 'Upgrade to Generate'}
               </Button>
               
-              <Button 
-                onClick={onViewAnalytics}
-                variant="outline" 
-                className="w-full"
-              >
-                <BarChart3 className="w-4 h-4 mr-2" />
-                View Analytics
-              </Button>
+              {isAdmin && (
+                <Button 
+                  onClick={onViewAnalytics}
+                  variant="outline" 
+                  className="w-full"
+                >
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                  View Analytics
+                </Button>
+              )}
               
               {!subscribed && (
                 <Button 
