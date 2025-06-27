@@ -7,6 +7,10 @@ interface HeroProps {
 }
 
 export const Hero = ({ onGetStarted }: HeroProps) => {
+  const handleSeeExamples = () => {
+    window.location.href = "/examples";
+  };
+
   return (
     <section className="container mx-auto px-4 pt-20 pb-16 text-center">
       <div className="max-w-4xl mx-auto">
@@ -36,7 +40,12 @@ export const Hero = ({ onGetStarted }: HeroProps) => {
             <Zap className="w-5 h-5 mr-2" />
             Generate Your First Email
           </Button>
-          <Button variant="outline" size="lg" className="text-lg px-8 py-3 h-14">
+          <Button 
+            variant="outline" 
+            size="lg" 
+            className="text-lg px-8 py-3 h-14"
+            onClick={handleSeeExamples}
+          >
             <Mail className="w-5 h-5 mr-2" />
             See Examples
           </Button>
