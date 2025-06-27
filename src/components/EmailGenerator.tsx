@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Copy, Sparkles, ArrowLeft, RefreshCw, HelpCircle, AlertTriangle, Crown } from "lucide-react";
+import { ArrowLeft, Sparkles, AlertTriangle, Crown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useUsage } from "@/hooks/useUsage";
@@ -17,6 +17,7 @@ import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { FrameworkSelector, FrameworkSettings } from "./FrameworkSelector";
+import { EmailPreview } from "./EmailPreview";
 import { generatePrompt } from "@/utils/promptGenerator";
 
 const industryPrompts = [
@@ -134,14 +135,6 @@ export const EmailGenerator = () => {
     } finally {
       setIsGenerating(false);
     }
-  };
-
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(generatedEmail);
-    toast({
-      title: "Copied!",
-      description: "Email copied to clipboard.",
-    });
   };
 
   const resetForm = () => {
@@ -323,57 +316,33 @@ export const EmailGenerator = () => {
                 </CardContent>
               </Card>
 
-              {/* Generated Email */}
-              <Card className="backdrop-blur-sm bg-white/60 border border-blue-200">
-                <CardHeader>
-                  <CardTitle>Your Generated Email</CardTitle>
-                  <CardDescription>
-                    {generatedEmail ? "Copy and customize as needed" : "Your email will appear here"}
-                    {usage.tier !== 'free' && (
-                      <span className="ml-2 text-yellow-600 text-sm">
-                        ({usage.tier === 'starter' ? '3' : '5'} variants included)
-                      </span>
-                    )}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {isGenerating ? (
+              {/* Email Preview with Rating */}
+              {isGenerating ? (
+                <Card className="backdrop-blur-sm bg-white/60 border border-blue-200">
+                  <CardHeader>
+                    <CardTitle>Generating Your Email</CardTitle>
+                  </CardHeader>
+                  <CardContent>
                     <div className="bg-gray-50/80 p-8 rounded-lg border min-h-[400px] flex items-center justify-center">
                       <div className="text-center">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
                         <p className="text-gray-600">Generating your personalized email using {frameworkSettings.framework.toUpperCase()} framework...</p>
                       </div>
                     </div>
-                  ) : generatedEmail ? (
-                    <div className="space-y-4">
-                      <div className="bg-white/80 p-4 rounded-lg border min-h-[400px] font-mono text-sm whitespace-pre-wrap">
-                        {generatedEmail}
-                      </div>
-                      <div className="flex gap-2">
-                        <Button onClick={copyToClipboard} className="flex-1" variant="outline">
-                          <Copy className="w-4 h-4 mr-2" />
-                          Copy to Clipboard
-                        </Button>
-                        <Button 
-                          onClick={regenerateEmail} 
-                          variant="outline"
-                          disabled={!usage.canGenerate}
-                        >
-                          <RefreshCw className="w-4 h-4 mr-2" />
-                          Regenerate
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="bg-gray-50/80 p-8 rounded-lg border min-h-[400px] flex items-center justify-center">
-                      <div className="text-center text-gray-500">
-                        <Sparkles className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                        <p>Configure your framework settings and fill out the form to generate your personalized cold email.</p>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              ) : (
+                <EmailPreview
+                  generatedEmail={generatedEmail}
+                  framework={frameworkSettings.framework}
+                  tone={frameworkSettings.tone}
+                  productService={productService}
+                  targetAudience={targetAudience}
+                  customHook={frameworkSettings.customHook}
+                  onRegenerate={regenerateEmail}
+                  canRegenerate={usage.canGenerate}
+                />
+              )}
             </div>
           </div>
         </section>
