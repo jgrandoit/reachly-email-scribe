@@ -27,7 +27,7 @@ export const Hero = ({ onGetStarted }: HeroProps) => {
         </h1>
         
         <p className="text-xl text-gray-600 mb-6 max-w-2xl mx-auto leading-relaxed">
-          ReachFlo writes high-converting cold emails for you — instantly. 
+          ReachFlo writes high-converting cold emails for you instantly. 
           Just tell us what you're offering and who you're targeting.
         </p>
         
