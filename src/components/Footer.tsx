@@ -14,7 +14,7 @@ export const Footer = () => {
                 <Mail className="w-5 h-5 text-white" />
               </div>
               <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                Reachly
+                ReachFlo
               </span>
             </div>
             <p className="text-gray-600 max-w-md">
@@ -59,7 +59,7 @@ export const Footer = () => {
 
         <div className="border-t border-gray-200 mt-8 pt-8 text-center">
           <p className="text-gray-600">
-            © 2025 Reachly. All rights reserved.
+            © 2025 ReachFlo. All rights reserved.
           </p>
         </div>
       </div>
